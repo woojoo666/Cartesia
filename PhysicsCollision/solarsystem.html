@@ -12,16 +12,15 @@
 	overflow: hidden;
 }
 </style>
-<script type="text/javascript" src="Cartesia/webgl-utils.js"></script>
-<script type="text/javascript" src="Cartesia/Transformation.js"></script>
-<script type="text/javascript" src="Cartesia/Mesh.js"></script>
-<script type="text/javascript" src="Cartesia/WebGLWrapper.js"></script>
-<script type="text/javascript" src="Cartesia/ShaderHandler.js"></script>
-<script type="text/javascript" src="Cartesia/Cartesia.js"></script>
-<script type="text/javascript" src="Cartesia/Camera.js"></script>
-<script type="text/javascript" src="Cartesia/Cube.js"></script>
-<script type="text/javascript" src="Cartesia/Sphere.js"></script>
-<script type='text/javascript' src='webgl-obj-loader.js'></script>
+<script type="text/javascript" src="../src/webgl-utils.js"></script>
+<script type="text/javascript" src="../src/Transformation.js"></script>
+<script type="text/javascript" src="../src/Mesh.js"></script>
+<script type="text/javascript" src="../src/WebGLWrapper.js"></script>
+<script type="text/javascript" src="../src/ShaderHandler.js"></script>
+<script type="text/javascript" src="../src/Cartesia.js"></script>
+<script type="text/javascript" src="../src/Camera.js"></script>
+<script type="text/javascript" src="../src/Cube.js"></script>
+<script type="text/javascript" src="../src/Sphere.js"></script>
 </head>
 
 <body>
@@ -41,41 +40,6 @@ window.onload = function init()
 	// Initialize and Configure WebGL
 
 	glwrapper = new WebGLWrapper( "gl-canvas" );
-
-	OBJ.downloadMeshes({
-		'imported_cube': 'cubetester.obj',
-		'imported_color_cube':'cubecolortester.obj'
-	}, function (meshes) {
-		// meshes loaded
-		console.log(meshes);
-		var converted = {};
-		for (var prop in meshes) {
-			converted[prop] = convertObjMesh( meshes[prop], prop);
-		}
-		loadedCube = converted.imported_cube;
-		rootCartesia.addChild(loadedCube);
-		loadedCube.move(vec3(5,0,0));
-	});
-
-	function convertObjMesh(obj, key) {
-		var vertices = [];
-		var v = obj.vertices;
-		for (var i = 0; i < v.length; i+=3) {
-			vertices.push(vec3(v[i],v[i+1],v[i+2]));
-		}
-		var indices = [];
-		var ind = obj.indices;
-		for (i = 0; i < ind.length; i+=3) {
-			indices.push(vec3(ind[i],ind[i+1],ind[i+2]));
-		}
-		var loaded = new TriangleMesh({
-			key: key,
-			vertices: vertices,
-			indices: indices,
-			color: vec4(0,0,1)
-		});
-		return new TriangleMeshSimpleCartesia(loaded);
-	}
 
 	// expose these variables for easy access
 	var gl = glwrapper.gl;
