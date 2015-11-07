@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<title>Solar System Demo</title>
+
+<style>
+* {
+	margin:0;
+	padding:0;
+	overflow: hidden;
+}
+</style>
+<script type="text/javascript" src="Cartesia/webgl-utils.js"></script>
+<script type="text/javascript" src="Cartesia/Transformation.js"></script>
+<script type="text/javascript" src="Cartesia/Mesh.js"></script>
+<script type="text/javascript" src="Cartesia/WebGLWrapper.js"></script>
+<script type="text/javascript" src="Cartesia/ShaderHandler.js"></script>
+<script type="text/javascript" src="Cartesia/Cartesia.js"></script>
+<script type="text/javascript" src="Cartesia/Camera.js"></script>
+<script type="text/javascript" src="Cartesia/Cube.js"></script>
+<script type="text/javascript" src="Cartesia/Sphere.js"></script>
+<script type='text/javascript' src='webgl-obj-loader.js'></script>
+</head>
+
+<body>
+<canvas id="gl-canvas" width="960" height="540">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<script>
+
+var glwrapper;
+var mCamera;
+var rootCartesia = new SimpleCartesia();
+var meshes = {};
+var loadedCube;
+
+window.onload = function init()
+{
+	// Initialize and Configure WebGL
+
+	glwrapper = new WebGLWrapper( "gl-canvas" );
+
+	OBJ.downloadMeshes({
+		'imported_cube': 'cubetester.obj',
+		'imported_color_cube':'cubecolortester.obj'
+	}, function (meshes) {
+		// meshes loaded
+		console.log(meshes);
+		var converted = {};
+		for (var prop in meshes) {
+			converted[prop] = convertObjMesh( meshes[prop], prop);
+		}
+		loadedCube = converted.imported_cube;
+		rootCartesia.addChild(loadedCube);
+		loadedCube.move(vec3(5,0,0));
+	});
+
+	function convertObjMesh(obj, key) {
+		var vertices = [];
+		var v = obj.vertices;
+		for (var i = 0; i < v.length; i+=3) {
+			vertices.push(vec3(v[i],v[i+1],v[i+2]));
+		}
+		var indices = [];
+		var ind = obj.indices;
+		for (i = 0; i < ind.length; i+=3) {
+			indices.push(vec3(ind[i],ind[i+1],ind[i+2]));
+		}
+		var loaded = new TriangleMesh({
+			key: key,
+			vertices: vertices,
+			indices: indices,
+			color: vec4(0,0,1)
+		});
+		return new TriangleMeshSimpleCartesia(loaded);
+	}
+
+	// expose these variables for easy access
+	var gl = glwrapper.gl;
+	var program = glwrapper.program;
+
+	// set lighting properties
+	glwrapper.lightPosition = vec4(0,0,5, 1);
+	glwrapper.lightAttenuation = 0; // how fast light fades over distance. Still needs tweaking, set this to 0 for now
+	glwrapper.lightAmbient = vec4( 0.7, 0.7, 0.7, 1.0 );
+	glwrapper.lightDiffuse = vec4( 0.7, 0.7, 0.7, 1.0 );
+	glwrapper.lightSpecular = vec4( 1, 1, 1, 1.0 );
+
+	//start with camera moved back 20 and up 10
+	mCamera = new Camera();
+	mCamera.move(vec3(0, 10, 20));
+	mCamera.movePitch(-30); //tilt down to see the whole solar system
+	rootCartesia.addChild(mCamera); // add camera to scene
+
+	// Structure:
+	//
+	//      rootCartesia
+	//      /     |     \
+	// mCamera   sun    earthRev
+	//                   /
+	//                earthNode
+	//                /       \
+	//              earth    moonRev
+	//                        /
+	//                      moon
+	//
+	// earthRev: handles the revolution of the earth
+	// earth: a Sphere that has a scale (planet's radius) and rotation (planet's rotation)
+	// earthNode: base for moonRev to attach to so earth's scale/rotation transformations don't affect moon's orbit
+	// moonRev: handles revolution of moon
+
+	// add sun at origin
+	// Sphere constructor: var mysphere = new Sphere(color, radius, complexity, shadeStyle);
+	var sun = new Sphere(vec4(1,1,0.7), 4, 20, "flat");
+	rootCartesia.addChild(sun);
+
+	// earth has a grandparent, which handles the revolution, and a parent, which the moon
+	// is attached to so scale/rotation transformations on the earth doesn't affect the moon's orbit
+	var earth = new Sphere(vec4( 1, 0, 0.5), 1, 10, "flat");
+	var earthNode = new SimpleCartesia();
+	var earthRev = new SimpleCartesia(); // earth's revolution Cartesia
+	earthNode.addChild(earth);
+	earthRev.addChild(earthNode);
+	rootCartesia.addChild(earthRev);
+
+	earthNode.move(vec3(7,0,0)); // distance from origin of revolution
+
+	var moon = new Sphere(vec4(0.3,0.3,0.3), 0.5, 5, "flat");
+	var moonRev = new SimpleCartesia();
+	moonRev.addChild(moon);
+	earthNode.addChild(moonRev);
+
+	glwrapper.useScene(rootCartesia); // the root node of the scene to render
+	glwrapper.useCamera(mCamera); // which perspective to render the scene from
+
+	moon.move(vec3(3,0,0)); // distance from origin of revolution
+
+	// called before every render
+	glwrapper.beforeRender = function () {
+		earthRev.moveYaw(2); // rotate earth's revolution by 2 degrees
+		moonRev.moveYaw(4); // rotate moon's revolution by 4 degrees
+		earth.moveYaw(-1); // earth rotates backward
+
+		if (loadedCube) loadedCube.moveYaw(2);
+	};
+
+	// starts the continuous render loop
+	glwrapper.start();
+
+	// some key bindings to show how movement works
+	// moveForward will move in the direction the object is facing (based on rotation matrix only)
+	document.body.onkeydown = function (e) {
+		switch(e.keyCode) {
+			case 37: mCamera.moveYaw(1); return; // left arrow: turn left
+			case 38: mCamera.moveInDirection(vec3(0,0.25,0)); return; // up arrow: move up
+			case 39: mCamera.moveYaw(-1); return; // right arrow: turn right
+			case 40: mCamera.moveInDirection(vec3(0,-0.25,0)); return; // down arrow: move down
+		}
+	};
+};
+
+</script>
+</body>
+
+</html>

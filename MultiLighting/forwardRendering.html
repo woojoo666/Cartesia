@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<title>Assign3</title>
+
+<style>
+* {
+	margin:0;
+	padding:0;
+	overflow: hidden;
+}
+</style>
+<script type="text/javascript" src="../Cartesia/webgl-utils.js"></script>
+<script type="text/javascript" src="../Cartesia/Transformation.js"></script>
+<script type="text/javascript" src="../Cartesia/Mesh.js"></script>
+<script type="text/javascript" src="../Cartesia/WebGLWrapper.js"></script>
+<script type="text/javascript" src="../Cartesia/ShaderHandler.js"></script>
+<script type="text/javascript" src="../Cartesia/Cartesia.js"></script>
+<script type="text/javascript" src="../Cartesia/Camera.js"></script>
+<script type="text/javascript" src="../Cartesia/Cube.js"></script>
+<script type="text/javascript" src="../Cartesia/Sphere.js"></script>
+</head>
+
+<body>
+<canvas id="gl-canvas" width="960" height="540">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<script>
+var glwrapper;
+var mCamera;
+var rootCartesia = new SimpleCartesia();
+var cube1;
+
+window.onload = function init()
+{
+	// Initialize and Configure WebGL
+
+	glwrapper = new WebGLWrapper( "gl-canvas" );
+	var gl = glwrapper.gl;
+	var canvas = glwrapper.canvas;
+
+	gl.blendFunc(gl.ONE, gl.ONE);
+	gl.enable(gl.BLEND);
+
+	//start with camera moved back 10
+	mCamera = new Camera();
+	mCamera.move(vec3(0, 0, 6));
+	rootCartesia.addChild(mCamera);
+
+	var revolve = new SimpleCartesia();
+	rootCartesia.addChild(revolve);
+
+	cube1 = new Cube(vec4( 1, 1, 1));
+	cube1.setPosition(vec3(0,0,1));
+	revolve.addChild(cube1);
+
+	glwrapper.useScene(rootCartesia);
+	glwrapper.useCamera(mCamera);
+
+	glwrapper.beforeRender = function () {
+		revolve.moveYaw(2);
+	};
+
+	rootCartesia.draw = function (context, parentTransform) {
+
+		// "Black Pass": draw all objects as opaque (no blending) and black (black lighting)
+		// to load all objects into the depth buffer
+		gl.disable(gl.BLEND);
+
+		// black lighting
+		glwrapper.lightPosition = vec4(0,0,0,1);
+		glwrapper.lightAttenuation = 0;
+		glwrapper.lightAmbient = vec4( 0,0,0,1 );
+		glwrapper.lightDiffuse = vec4( 0,0,0,1 );
+		glwrapper.lightSpecular = vec4( 0,0,0,1 );
+
+		SimpleCartesia.prototype.draw.call(this, context, parentTransform); // black pass
+
+		// "Light Passes": for each light, render the light's contribution onto the object as
+		// an additive blending overlay
+
+		gl.blendFunc(gl.ONE, gl.ONE);
+		gl.enable(gl.BLEND);
+
+		// red light on the left
+		glwrapper.lightPosition = vec4(-1,0,4, 1);
+		glwrapper.lightAttenuation = 0.4;
+		glwrapper.lightAmbient = vec4( 0.2, 0, 0, 1.0 );
+		glwrapper.lightDiffuse = vec4( 0.7, 0, 0, 1.0 );
+		glwrapper.lightSpecular = vec4( 0.7, 0, 0, 1.0 );
+
+		SimpleCartesia.prototype.draw.call(this, context, parentTransform); // red light pass
+
+		// green light on the right
+		glwrapper.lightPosition = vec4(1,0,4, 1);
+		glwrapper.lightAttenuation = 0.4;
+		glwrapper.lightAmbient = vec4( 0, 0.2, 0, 1.0 );
+		glwrapper.lightDiffuse = vec4( 0, 0.7, 0, 1.0 );
+		glwrapper.lightSpecular = vec4( 0, 0.7, 0, 1.0 );
+
+		SimpleCartesia.prototype.draw.call(this, context, parentTransform); // green light pass
+	};
+
+	glwrapper.start();
+};
+</script>
+</body>
+
+</html>

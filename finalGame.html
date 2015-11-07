@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<title>Ikuzo</title>
+
+
+<style>
+#container {
+	position: relative;
+}
+#container canvas, #parentDiv {
+	font-family: "Avant Garde", Avantgarde, "Century Gothic", CenturyGothic, "AppleGothic", sans-serif;
+	font-size: 20px;
+	color: white;
+	text-align: right;
+
+	text-transform: uppercase;
+	text-rendering: optimizeLegibility;
+
+	position: absolute;
+	z-index: 0;
+}
+
+#parentDiv {
+	left: 50px;
+	top: 50px;
+}
+canvas {
+  border: 1px solid black;
+}
+</style>
+<script type="text/javascript" src="Cartesia/webgl-utils.js"></script>
+<script type="text/javascript" src="Cartesia/Transformation.js"></script>
+<script type="text/javascript" src="Cartesia/Mesh.js"></script>
+<script type="text/javascript" src="Cartesia/WebGLWrapper.js"></script>
+<script type="text/javascript" src="Cartesia/ShaderHandler.js"></script>
+<script type="text/javascript" src="Cartesia/Cartesia.js"></script>
+<script type="text/javascript" src="Cartesia/Camera.js"></script>
+<script type="text/javascript" src="Cartesia/Cube.js"></script>
+<script type="text/javascript" src="Cartesia/Sphere.js"></script>
+<script type='text/javascript' src='webgl-obj-loader.js'></script>
+<script type='text/javascript' src='worldModels.js'></script>
+<script type='text/javascript' src='staticassets.js'></script>
+<script type='text/javascript' src='PhysicsCollision/World.js'></script>
+  </head>
+  <body>
+    
+    
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      var socket = io();
+      var state = false;
+      $('form').submit(function(){
+        socket.emit('chat message', $('#m').val());
+        $('#m').val('');
+        return false;
+      });
+      
+    </script>
+  </body>
+
+
+<div id = "container">
+<canvas id="gl-canvas" width="960" height="540">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+<div id="parentDiv">
+  
+  <div id="childDiv"></div>
+</div></div>
+<script>
+
+var glwrapper;
+var mCamera;
+var rootCartesia = new SimpleCartesia();
+var meshes = {};
+var loadedCube;
+var score = 0;
+var zombiesSword = [[0,0,0],[0,0,0],[0,0,0]];
+var discoMode = false;
+
+var playerID = Math.random();
+playerID  = playerID.toFixed(4);
+
+var otherplayerID;
+//startscreen
+var startscreen = true;
+var startscreenctr = 0;
+
+function Coloredobject (vertices, normals ,index, acolor,dcolor,scolor, shininess, name) {
+
+	this.vindices = offsetconverter(index)[0];
+	this.nindices = offsetconverter(index)[1];
+	this.pointsArray= vectorposition(converter(vertices),3,this.vindices,1);
+	this.normalsArray = vectorposition(converter(normals),3,this.nindices,0);
+	this.acolor = acolor;
+	this.dcolor = dcolor;
+	this.scolor = scolor;
+	this.shininess = shininess;
+	this.name = name;
+}
+
+function converter(str)
+{
+    return str.split(" ").map(function(elem) {return parseFloat(elem);});
+}
+
+function offsetconverter(str)
+{
+    var ret =[2];
+    ret[0] = new Array();
+    ret[1] = new Array();
+    var y = converter(str);
+
+    for(var i = 0; i< y.length; i+=2)
+    {
+        ret[0].push(y[i]);
+        ret[1].push(y[i+1]);
+    }
+
+    return ret;
+}
+
+function vectorposition(floatarray,stride,position,equine)
+{
+    var newarray = [];
+    for(var i =0; i<position.length; i++)
+    {
+        for(var j=0; j<stride; j++)
+        {
+            newarray.push(floatarray[stride*position[i]+j]);
+        }
+    }
+
+    return newarray;
+}
+function tester(array)
+{
+    retarray = [];
+
+    for(var i =0; i<array.length; i++)
+    {
+        retarray.push(array[i]);
+        if((i+1)%3 === 0)
+           { retarray.push(1);}
+    }
+
+    return retarray;
+}
+
+function createWorldObj(worldobjarray,key,inverseNormals){
+
+	var testObj =[];
+	worldobjarray.forEach(function (worldobj, worldobjindex) {
+		var vertices = [];
+		var v = worldobj.pointsArray;
+		for (var i = 0; i < v.length; i+=3) {
+			vertices.push(vec3(v[i],v[i+1],v[i+2]));
+		}
+		var normals = [];
+		var n = worldobj.normalsArray;
+		for (i = 0; i < n.length; i+=3) {
+			normals.push(vec3(n[i],n[i+1],n[i+2]));
+		}
+		var verticesTriangles = [];
+		for (i = 0; i < vertices.length; i+=3) {
+			if (inverseNormals)
+				verticesTriangles.push(vec3(vertices[i+2],vertices[i+1],vertices[i]));
+			else
+				verticesTriangles.push(vec3(vertices[i],vertices[i+1],vertices[i+2]));
+			
+		}
+		var normalsTriangles = [];
+		for (i = 0; i < normals.length; i+=3) {
+				normalsTriangles.push(vec3(normals[i+2],normals[i+1],normals[i]));
+		}
+		var testObjMesh = new TriangleMesh({
+			key: key + worldobjindex,
+			triangles: verticesTriangles,
+			//normals: normalsTriangles,
+			ambient: worldobj.dcolor,
+			diffuse: worldobj.dcolor,
+			specular: worldobj.scolor,
+			shininess: worldobj.shininess,
+			color: worldobj.dcolor,
+		});
+		 testObj.push(new TriangleMeshSimpleCartesia(testObjMesh));
+	});
+
+	return testObj;
+}
+
+window.onload = function init()
+{
+	// Initialize and Configure WebGL
+
+	glwrapper = new WebGLWrapper( "gl-canvas" );
+
+	// expose these variables for easy access
+	var gl = glwrapper.gl;
+	var program = glwrapper.program;
+
+	var worldObjects = [];
+	worldObjects.push(new Coloredobject(worldVertices, worldNormals, groundindex,vec4(0,0,0,1),vec4(0.95, 0.8239495, 0.8698239, 1),vec4(0, 0, 0, 1),0,"ground"));
+	worldObjects.push(new Coloredobject(worldVertices, worldNormals, mountainindex,vec4(0, 0, 0, 1),vec4(0.1062907, 0.0588438, 0.02102828, 1),vec4(0, 0, 0, 1),0,"mountain"));
+	worldObjects.push(new Coloredobject(worldVertices, worldNormals, snowindex,vec4(0, 0, 0, 1),vec4(0.7406597, 0.7406597, 0.7406597, 1),vec4(0.7406597, 0.7406597, 0.7406597, 1),50,"snow"));
+	worldObjects.push(new Coloredobject(worldVertices, worldNormals, greenindex,vec4(0, 0, 0, 1),vec4(0.3013948, 0.4025579, 0.106926881, 1),vec4(0, 0, 0, 1),0,"green"));
+	worldObjects.push(new Coloredobject(worldVertices, worldNormals, waterindex,vec4(0, 0, 0, 1),vec4(0.02642846, 0.5671851, 0.8, 1),vec4(0.8, 0.8, 0.8, 1),50,"water"));
+	worldObjects.push(new Coloredobject(worldVertices, worldNormals, sandindex,vec4(0, 0, 0, 1),vec4(0.95, 0.8239495, 0.8698239, 1),vec4(0, 0, 0, 1),0,"sand"));
+	worldObjects.push(new Coloredobject(worldVertices, worldNormals, evilwaterindex,vec4(0, 0, 0, 1),vec4(0.1144728, 0.64, 0.3629149, 1),vec4(0.5, 0.5, 0.5, 1),50,"evilwater"));
+	worldObjects.push(new Coloredobject(worldVertices, worldNormals, stoneindex,vec4(0, 0, 0, 1),vec4(0.4519357, 0.5056741, 0.4283828, 1),vec4(0, 0, 0, 1),0,"stone"));
+
+	var foxObjeects = [];
+	var foxHead = [];
+	var foxBody = [];
+	var foxSword = [];
+	foxHead.push(new Coloredobject(characterVertices, characterNormals, hoodindex, vec4(0, 0, 0, 1), vec4(0.1739068,0.05427403,0.6839827,1), vec4(0.5, 0.5, 0.5, 1), 50, "hood"));
+	foxHead.push(new Coloredobject(characterVertices, characterNormals, furindex, vec4(0, 0, 0, 1), vec4(0.64, 0.209623, 0.04881633, 1), vec4(0.5, 0.5, 0.5, 1), 50, "fur"));
+	foxHead.push(new Coloredobject(characterVertices, characterNormals, lightfurindex, vec4(0, 0, 0, 1), vec4(0.8, 0.6896516, 0.4602633, 1), vec4(0.5, 0.5, 0.5, 1), 50, "lightfur"));
+	foxBody.push(new Coloredobject(characterVertices2, characterNormals2, bodyindex, vec4(0, 0, 0, 1), vec4(0.2020696, 0.06175072, 0.8, 1), vec4(0.5, 0.5, 0.5, 1), 50, "body"));
+	//foxSword.push(new Coloredobject(characterVertices3, characterNormals3, material4index, vec4(0, 0, 0, 1), vec4(0.002476351, 0.002476351, 0.002476351, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material4"));
+	foxSword.push(new Coloredobject(characterVertices3, characterNormals3, material4index, vec4(0, 0, 0, 1), vec4(0, 0, 0, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material4"));
+	foxSword.push(new Coloredobject(characterVertices4, characterNormals4, material7index, vec4(0, 0, 0, 1), vec4(0.2548311, 0.01593546, 0.02052038, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material7"));
+	foxSword.push(new Coloredobject(characterVertices5, characterNormals5, material8index, vec4(0, 0, 0, 1), vec4(0.2937901, 0, 0.005734603, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material8"));
+
+	var lighthouseObjects = [];
+	lighthouseObjects.push(new Coloredobject(lighthousepositions,lighthousenormals,lighthousewhiteindex,vec4(0,0,0,1),vec4(0.9372473,1,0.933513,1),vec4(0.9372473,1,0.933513,1),vec4(0.5,0.5,0.5,1),50,"lighthousewhite"));
+	lighthouseObjects.push(new Coloredobject(lighthousepositions,lighthousenormals,lighthouseredindex,vec4(0,0,0,1),vec4(0.7523121,0.035375,0.09017628,1),vec4(0.7523121,0.035375,0.09017628,1),vec4(0.5,0.5,0.5,1),50,"lighthousered"));
+
+	var brokenpillarObjects1 = [];
+	var brokenpillarObjects2 = [];
+	brokenpillarObjects1.push(new Coloredobject(brokenpillarpositions,brokenpillarnormals,brokenpillarindex,vec4(0,0,0,1),vec4(0.9372473,1,0.933513,1),vec4(0.9372473,1,0.933513,1),vec4(0.5,0.5,0.5,1),50,"brokenpillar"));
+	brokenpillarObjects2.push(new Coloredobject(brokenbasepositions,brokenbasenormals,brokenbaseindex,vec4(0,0,0,1),vec4(0.9372473,1,0.933513,1),vec4(0.9372473,1,0.933513,1),vec4(0.5,0.5,0.5,1),50,"brokenbase"));
+
+	var royceObjects1 = [];
+	var royceObjects2 = [];
+	var royceObjects3 = [];
+	royceObjects1.push(new Coloredobject(royceVerticesCircle, royceNormalsCircle, circleMaterial1index, vec4(0, 0, 0, 1), vec4(0.8, 0.2327101, 0.1263648, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material1R"));
+	royceObjects1.push(new Coloredobject(royceVerticesCircle, royceNormalsCircle, circleMaterial2index, vec4(0, 0, 0, 1),vec4(0.8, 0.4630913, 0.1234744, 1),vec4(0.5, 0.5, 0.5, 1),50, "material2R"));
+	royceObjects2.push(new Coloredobject(royceVerticesCube2, royceNormalsCube2, cube2Material1index, vec4(0, 0, 0, 1), vec4(0.8, 0.2327101, 0.1263648, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material1R"));
+	royceObjects2.push(new Coloredobject(royceVerticesCube2, royceNormalsCube2, cube2Material2index, vec4(0, 0, 0, 1),vec4(0.8, 0.4630913, 0.1234744, 1),vec4(0.5, 0.5, 0.5, 1),50, "material2R"));
+	royceObjects3.push(new Coloredobject(royceVerticesCube3, royceNormalsCube3, cube3Material1index, vec4(0, 0, 0, 1), vec4(0.8, 0.2327101, 0.1263648, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material1R"));
+	royceObjects3.push(new Coloredobject(royceVerticesCube3, royceNormalsCube3, cube3Material2index, vec4(0, 0, 0, 1),vec4(0.8, 0.4630913, 0.1234744, 1),vec4(0.5, 0.5, 0.5, 1),50, "material2R"));
+
+	var deadTreeObjects1 = [];
+	var deadTreeObjects2 = [];
+	var deadTreeObjects3 = [];
+	var deadTreeObjects4 = [];
+	deadTreeObjects1.push(new Coloredobject(deadVertices1, deadNormals1, dead1index, vec4(0, 0, 0, 1), vec4(0.2937901, 0, 0.005734603, 1), vec4(0.5, 0.5, 0.5, 1), 50, "deadtree1"));
+	deadTreeObjects2.push(new Coloredobject(deadVertices2, deadNormals2, dead2index, vec4(0, 0, 0, 1), vec4(0.8, 0.2327101, 0.1263648, 1), vec4(0.5, 0.5, 0.5, 1), 50, "deadtree2"));
+	deadTreeObjects3.push(new Coloredobject(deadVertices3, deadNormals3, dead3index, vec4(0, 0, 0, 1), vec4(0.64, 0.209623, 0.04881633, 1), vec4(0.5, 0.5, 0.5, 1), 50, "deadtree3"));
+	deadTreeObjects4.push(new Coloredobject(deadVertices4, deadNormals4, dead4index, vec4(0, 0, 0, 1), vec4(0.2020696, 0.06175072, 0.8, 1), vec4(0.5, 0.5, 0.5, 1), 50, "deadtree4"));
+
+	var assetTreeObjects1 = [];
+	var assetLeavesObjects2 = [];
+	assetTreeObjects1.push(new Coloredobject(assettreepositions, assettreenormals, assettreeindex, vec4(0, 0, 0, 1), vec4(0.2815912,0.04416161,0.008374129,1), vec4(0,0,0,1), 0, "assettree"));
+	assetLeavesObjects2.push(new Coloredobject(assetleavespositions, assetleavesnormals, assetleavesindex, vec4(0, 0, 0, 1), vec4(0.02119371,0.2090166,0.004784017,1), vec4(0,0,0, 1), 0, "assetleaves"));
+
+	// set lighting properties
+	glwrapper.lightPosition = vec4(0,0,5, 1);
+	glwrapper.lightAttenuation = 0; // how fast light fades over distance. Still needs tweaking, set this to 0 for now
+	glwrapper.lightAmbient = vec4( 0.7, 0.7, 0.7, 1.0 );
+	glwrapper.lightDiffuse = vec4( 0.7, 0.7, 0.7, 1.0 );
+	glwrapper.lightSpecular = vec4( 1, 1, 1, 1.0 );
+
+	//start with camera moved back 20 and up 10
+	mCamera = new Camera();
+	mCamera.move(vec3(0, 1.5, 3));
+	mCamera.movePitch(-25); //tilt down to see the whole solar system
+	rootCartesia.addChild(mCamera); // add camera to scene
+
+	glwrapper.useScene(rootCartesia); // the root node of the scene to render
+	glwrapper.useCamera(mCamera); // which perspective to render the scene from
+
+	//-------------world --------------------------
+	var rotateCartesia = new SimpleCartesia();
+
+	var worldCartesia = new SimpleCartesia();
+	var testObj = createWorldObj(worldObjects,"world");
+	testObj.forEach(function(arrayobj,arrayindex)
+		{worldCartesia.addChild(arrayobj);});
+	
+	var world = new Planet(1, 0.85);
+
+	world.addChild(worldCartesia);
+	rootCartesia.addChild(world);
+
+	var rotateCartesia = new SimpleCartesia();
+	rootCartesia.addChild(rotateCartesia);
+
+	//Bounding Sphere for Mountain
+	var mountain = new PlanetObject(world, 73, -22);
+	//var mountainSphere = new Sphere(vec4(1, 0, 1), 0.28, 20, "flat");
+	//mountain.addChild(mountainSphere);
+	var mountainBoundary = new BoundingSphere(0.25);
+	mountain.addBoundingSphere(mountainBoundary);
+
+	//Bounding Sphere2 for Mountain
+	var mountain2 = new PlanetObject(world, 108, -22);
+	//var mountainSphere2 = new Sphere(vec4(1, 1, 0), 0.28, 20, "flat");
+	//mountain2.addChild(mountainSphere2);
+	var mountainBoundary2 = new BoundingSphere(0.25);
+	mountain2.addBoundingSphere(mountainBoundary2);
+
+	
+	//---------------lighthouse-------------
+	var lighthouseCartesia = new SimpleCartesia();
+	
+	lighthouseCartesia.movePitch(-90);
+	lighthouseCartesia.scaleBy(0.03);
+	//rootCartesia.addChild(lighthouseCartesia);
+	var lighthouse = new PlanetObject(world,-10,35);
+	lighthouse.addChild(lighthouseCartesia);
+
+	var lighthouseObj = createWorldObj(lighthouseObjects,"lighthouse",1);
+	lighthouseObj.forEach(function(arr,arrindex)
+		{lighthouseCartesia.addChild(arr);});
+
+	//------ broken pillar ----------
+	function createBrokenPillar(planet, lat, lon) {
+		var brokenpillarCartesia = new SimpleCartesia();
+		
+		brokenpillarCartesia.movePitch(-90);
+		brokenpillarCartesia.scaleBy(0.04);
+		brokenpillarCartesia.move(vec3(0,-0.02,0));
+		var brokenpillar = new PlanetObject(planet,lat,lon);
+		brokenpillar.addChild(brokenpillarCartesia);
+		var pillarBoundary = new BoundingSphere(0.05);
+		brokenpillar.addBoundingSphere(pillarBoundary);
+
+		var brokenpillarCartesia1 = new CustomCartesia();
+		var brokenpillarCartesia2 = new CustomCartesia();
+
+		brokenpillarCartesia1.setTransform(new Mat4().append(new Transformation(4,
+		[[0.6315264,0,0,0],[0,0.6315264,0,0],[0,0,0.6315264,0.8062159],[0,0,0,1]])));
+		brokenpillarCartesia.addChild(brokenpillarCartesia1);
+		
+		brokenpillarCartesia2.setTransform(new Mat4().append(new Transformation(4,
+		[[1,0,0,0],[0,1,0,0],[0,0,0.1558412,0],[0,0,0,1]])));
+		brokenpillarCartesia.addChild(brokenpillarCartesia2);
+
+		var brokenPillar1Obj = createWorldObj(brokenpillarObjects1,"brokenPillar1",1);
+		brokenPillar1Obj.forEach(function(arr1,arr1index)
+			{brokenpillarCartesia1.addChild(arr1);});
+
+		var brokenPillar2Obj = createWorldObj(brokenpillarObjects2,"brokenPillar2",1);
+		brokenPillar2Obj.forEach(function(arr2,arr2index)
+			{brokenpillarCartesia2.addChild(arr2);});
+	}
+	createBrokenPillar(world,-60,10);
+	createBrokenPillar(world,-90,20);
+	createBrokenPillar(world,-75,30);
+	createBrokenPillar(world,-50,30);
+	createBrokenPillar(world,-145,50);
+
+	//-------- Royce Hall --------------
+	var royceCartesia = new SimpleCartesia();
+	
+	royceCartesia.movePitch(-90);
+	royceCartesia.moveRoll(-90);
+	royceCartesia.scaleBy(0.03);
+	royceCartesia.move(vec3(0,-0.03,0));
+	var royce = new PlanetObject(world,-10,90);
+	royce.addChild(royceCartesia);
+
+	var royceCartesia1 = new SimpleCartesia();
+	
+	var royceCartesia2 = new CustomCartesia();
+	var royceCartesia3 = new CustomCartesia();
+	royceCartesia.addChild(royceCartesia1);
+	royceCartesia.addChild(royceCartesia3);
+	royceCartesia.addChild(royceCartesia2);
+	royceCartesia1.move(vec3(0,0,2.8));
+	
+	royceCartesia3.setTransform(new Mat4().translate(vec3(0,-8.2,0)));
+
+	royceCartesia3.applyTransform(new Mat4().append(new Transformation(4,[
+		[-1.25107e-8,-1.049129,0,0.08837295],[1.049129,-1.25107e-8,0,4.21192],[0,0,-0.07441448,9.141123],[0,0,0,1]
+	])));
+	royceCartesia2.applyTransform(new Mat4().append(new Transformation(4,[
+		[-1.25107e-8,-1.049129,0,0.08837295],[1.049129,-1.25107e-8,0,4.21192],[0,0,-0.07441448,9.141123],[0,0,0,1]
+	])));
+
+	var rocye1Obj = createWorldObj(royceObjects1,"royce1");
+	rocye1Obj.forEach(function(arr4,arr1index)
+		{royceCartesia1.addChild(arr4);});
+	
+	var rocye2Obj = createWorldObj(royceObjects3,"royce2");
+	rocye2Obj.forEach(function(arr5,arr2index)
+		{royceCartesia2.addChild(arr5);});
+
+	var rocye3Obj = createWorldObj(royceObjects3,"royce3");
+	rocye3Obj.forEach(function(arr6,arr3index)
+		{royceCartesia3.addChild(arr6);});
+	
+	//----------- dead Tree -------------------------------
+	function createDeadTree(planet, lat, lon) {
+		var treeCartesia = new SimpleCartesia();
+		
+		treeCartesia.movePitch(-90);
+		treeCartesia.scaleBy(0.03);
+		treeCartesia.move(vec3(0,-0.03,0));
+		var deadtree = new PlanetObject(planet,lat,lon);
+		deadtree.addChild(treeCartesia);
+
+		var treeCartesia1 = new CustomCartesia();
+		treeCartesia1.setTransform(new Mat4().append(new Transformation(4,[
+			[1,0,0,0],[0,1,0,0],[0,0,5.012469,4.146373],[0,0,0,1]
+		])));
+		treeCartesia.addChild(treeCartesia1);
+		
+		var treeCartesia2 = new CustomCartesia();
+		treeCartesia2.setTransform(new Mat4().append(new Transformation(4,[
+			[-0.06246613,0.08540072,-0.5575405,-0.5035619],
+			[-0.1044635,0.09179561,0.421466,0.4421017],
+			[0.1240296,0.1203256,0.07417902,7.649969],
+			[0,0,0,1]
+		])));
+		treeCartesia.addChild(treeCartesia2);
+		
+		var treeCartesia3 = new CustomCartesia();
+		treeCartesia3.setTransform(new Mat4().append(new Transformation(4,[
+			[0.00137249,0.1754428,-0.1187501,-0.2010627],[-0.01945975,0.01237392,1.68369,1.816613],[0.1777011,0,0.1852953,6.3037],[0,0,0,1]
+		])));
+		treeCartesia.addChild(treeCartesia3);
+		
+		var treeCartesia4 = new CustomCartesia();
+		treeCartesia4.setTransform(new Mat4().append(new Transformation(4,[
+			[0.2723772,-0.3507037,-0.5396445,-0.5812497],[-0.09810556,0.126846,-1.494313,-1.818958],[0.3778918,0.2857113,0.001022772,3.642926],[0,0,0,1]
+		])));
+		treeCartesia.addChild(treeCartesia4);
+
+		var tree1Obj = createWorldObj(deadTreeObjects1,"tree1");
+		tree1Obj.forEach(function(arr1,arr1index)
+			{treeCartesia1.addChild(arr1);});
+
+		var tree2Obj = createWorldObj(deadTreeObjects2,"tree2");
+		tree2Obj.forEach(function(arr2,arr2index)
+			{treeCartesia2.addChild(arr2);});
+
+		var tree3Obj = createWorldObj(deadTreeObjects3,"tree3");
+		tree3Obj.forEach(function(arr3,arr3index)
+			{treeCartesia3.addChild(arr3);});
+
+		var tree4Obj = createWorldObj(deadTreeObjects4,"tree4");
+		tree4Obj.forEach(function(arr4,arr4index)
+			{treeCartesia4.addChild(arr4);});
+
+	}
+	createDeadTree(world,-20,0);
+	createDeadTree(world,-30,-20);
+	createDeadTree(world,-35,-60);
+	createDeadTree(world,-40,-30);
+	createDeadTree(world,-50,-60);
+	createDeadTree(world,-80,-80);
+
+	createDeadTree(world,-60,35);
+	createDeadTree(world,-75,0);
+	createDeadTree(world,-80,15);
+	createDeadTree(world,-85,-30);
+	createDeadTree(world,-90,35);
+	createDeadTree(world,-100,5);
+	createDeadTree(world,-110,25);
+	createDeadTree(world,-110,-15);
+	createDeadTree(world,-130,-35);
+
+	//----------- Tree Asset -------------------------------
+	function createTreeAsset(planet, lat, lon, z) {
+		var treeCartesia = new SimpleCartesia();
+		
+		treeCartesia.movePitch(-90);
+		treeCartesia.scaleBy(0.08);
+		treeCartesia.move(vec3(0,-(0.02*Math.random() + 0.07),0));
+		if (z)
+			treeCartesia.move(vec3(0,z,0));
+		var assettree = new PlanetObject(planet,lat,lon);
+		assettree.addChild(treeCartesia);
+		var treeBoundary = new BoundingSphere(0.06);
+		assettree.addBoundingSphere(treeBoundary);
+
+		var treeCartesia1 = new CustomCartesia();
+		/*treeCartesia1.setTransform(new Mat4().append(new Transformation(4,[
+			[1,0,0,0],[0,1,0,0],[0,0,5.012469,4.146373],[0,0,0,1]
+		])));*/
+		treeCartesia.addChild(treeCartesia1);
+		
+		var treeCartesia2 = new CustomCartesia();
+		treeCartesia2.setTransform(new Mat4().append(new Transformation(4,
+			[[0.8769287,0,0,0.1576381],[0,0.8769287,0,0.1593166],[0,0,0.8769287,2.520569],[0,0,0,1]]
+		)));
+		treeCartesia.addChild(treeCartesia2);
+
+		var tree1Obj = createWorldObj(assetTreeObjects1,"assettree1");
+		tree1Obj.forEach(function(arr1,arr1index)
+		{treeCartesia1.addChild(arr1);});
+
+		var tree2Obj = createWorldObj(assetLeavesObjects2,"assetleaves2");
+		tree2Obj.forEach(function(arr2,arr2index)
+		{treeCartesia2.addChild(arr2);});
+	}
+	createTreeAsset(world,30,10);
+	createTreeAsset(world,50,5);
+	createTreeAsset(world,80,0);
+	createTreeAsset(world,80,15);
+	createTreeAsset(world,35,-40);
+	createTreeAsset(world,50,-30);
+	createTreeAsset(world,50,-50);
+	createTreeAsset(world,30,-20);
+	createTreeAsset(world,37,-22);
+	createTreeAsset(world,80,-65);
+	createTreeAsset(world,110,-70);
+	createTreeAsset(world,180,0,-0.1);
+	createTreeAsset(world,0,0);
+
+	//----zombie-----------------
+
+	function createZombies(planet, lat, lon) {
+
+		var foxHead = [];
+		var foxBody = [];
+		var foxSword = [];
+
+		var randbodycolors = vec4(Math.random(),Math.random(),Math.random(),1);
+		var randswordcolors = vec4(Math.random(),Math.random(),Math.random(),1);
+		var swordcol = vec4(0.9,0,0,1);
+
+		foxHead.push(new Coloredobject(characterVertices, characterNormals, hoodindex, vec4(0, 0, 0, 1), randbodycolors, vec4(0.5, 0.5, 0.5, 1), 50, "hood"));
+		foxHead.push(new Coloredobject(characterVertices, characterNormals, furindex, vec4(0, 0, 0, 1), vec4(0.64, 0.209623, 0.04881633, 1), vec4(0.5, 0.5, 0.5, 1), 50, "fur"));
+		foxHead.push(new Coloredobject(characterVertices, characterNormals, lightfurindex, vec4(0, 0, 0, 1), vec4(0.8, 0.6896516, 0.4602633, 1), vec4(0.5, 0.5, 0.5, 1), 50, "lightfur"));
+		foxBody.push(new Coloredobject(characterVertices2, characterNormals2, bodyindex, vec4(0, 0, 0, 1), randbodycolors, vec4(0.5, 0.5, 0.5, 1), 50, "body"));
+		//foxSword.push(new Coloredobject(characterVertices3, characterNormals3, material4index, vec4(0, 0, 0, 1), vec4(0.002476351, 0.002476351, 0.002476351, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material4"));
+		foxSword.push(new Coloredobject(characterVertices3, characterNormals3, material4index, vec4(0, 0, 0, 1), swordcol, vec4(0.5, 0.5, 0.5, 1), 50, "material4"));
+		foxSword.push(new Coloredobject(characterVertices4, characterNormals4, material7index, vec4(0, 0, 0, 1), vec4(0.2548311, 0.01593546, 0.02052038, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material7"));
+		foxSword.push(new Coloredobject(characterVertices5, characterNormals5, material8index, vec4(0, 0, 0, 1), vec4(0.2937901, 0, 0.005734603, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material8"));
+
+		var zombieCartesia = new SimpleCartesia();
+		var zombiedude = new Player(planet, lat, lon);
+
+		zombiedude.addChild(zombieCartesia);
+		var zombiedudeBoundary = new BoundingSphere(0.06);
+		zombiedude.addBoundingSphere(zombiedudeBoundary);
+		zombiedude.move(vec3(0, 0.1, 0));
+
+		var zombieheadCartesia = new SimpleCartesia();
+		var zombiebodyCartesia = new SimpleCartesia();
+		var zombieswordoffsetCartesia = new SimpleCartesia();
+		var zombieswordCartesia = new SimpleCartesia();
+
+		zombieCartesia.addChild(zombieheadCartesia);
+		zombieCartesia.addChild(zombiebodyCartesia);
+		zombieCartesia.addChild(zombieswordoffsetCartesia);
+		zombieswordoffsetCartesia.addChild(zombieswordCartesia);
+		
+		// called before every render
+		var zombieHeadObj = createWorldObj(foxHead,"foxhead");
+		zombieHeadObj.forEach(function(arr1,arr1index)
+		{zombieheadCartesia.addChild(arr1);});
+
+		var zombieBodyObj = createWorldObj(foxBody,"foxbody");
+		zombieBodyObj.forEach(function(arr2,arr2index)
+		{zombiebodyCartesia.addChild(arr2);});
+
+		var zombieSwordObj = createWorldObj(foxSword,"foxsword");
+		zombieSwordObj.forEach(function(arr3,arr3index)
+		{zombieswordCartesia.addChild(arr3);});
+
+		zombiebodyCartesia.move(vec3(-6,0,1.5));
+		zombieswordCartesia.move(vec3(0,-6,0));
+		zombiebodyCartesia.moveYaw(90);
+		zombiebodyCartesia.scaleBy(3);
+		zombieswordCartesia.scaleBy(0.5);
+		zombieswordCartesia.moveYaw(90);
+		//zombieswordCartesia.movePitch(90);
+
+		zombieCartesia.scaleBy(0.01);
+		zombieCartesia.moveRoll(90);
+		zombieCartesia.moveYaw(180);
+		zombieCartesia.move(vec3(0,0.16,0));
+
+		return zombiedude;
+	}
+
+	var zombiedudes = [];
+	//zombiedudes.push(createZombies(world,100,80));
+	//zombiedudes.push(createZombies(world,120,-50));
+	//zombiedudes.push(createZombies(world,18,78));
+	//--- character---------------
+
+	function Fox (world, latitude, longitude, name) {
+
+		Player.call(this, world, latitude, longitude, name);
+
+		this.characterCartesia = new SimpleCartesia();
+		var swordPoint = new DamagePoint(world, this);
+
+		this.addChild(this.characterCartesia);
+		this.dudeBoundary = new BoundingSphere(0.06);
+		this.addBoundingSphere(this.dudeBoundary);
+		this.move(vec3(0, 0.1, 0));
+
+		this.characterheadCartesia = new SimpleCartesia();
+		this.characterbodyCartesia = new SimpleCartesia();
+
+		this.swordIdleCartesia = new CustomCartesia();
+		this.swordRotateCartesia = new SimpleCartesia();
+		this.swordYAxisCartesia = new CustomCartesia();
+		this.characterswordoffsetCartesia = new SimpleCartesia();
+		this.characterswordCartesia = new SimpleCartesia();
+		this.characterswordoffsetCartesia.addChild(swordPoint);
+		this.characterswordoffsetCartesia.swordPoint = swordPoint;
+
+		this.characterCartesia.addChild(this.characterheadCartesia);
+		this.characterCartesia.addChild(this.characterbodyCartesia);
+
+		this.characterCartesia.addChild(this.swordIdleCartesia);
+		this.swordIdleCartesia.addChild(this.swordYAxisCartesia);
+		this.swordYAxisCartesia.addChild(this.swordRotateCartesia);
+		this.swordRotateCartesia.addChild(this.characterswordoffsetCartesia);
+		this.characterswordoffsetCartesia.addChild(this.characterswordCartesia);
+
+		var self = this;
+		// called before every render
+		this.characterHeadObj = createWorldObj(foxHead,"foxhead");
+		this.characterHeadObj.forEach(function (arr1,arr1index) {
+			self.characterheadCartesia.addChild(arr1);
+		});
+
+		this.characterBodyObj = createWorldObj(foxBody,"foxbody");
+		this.characterBodyObj.forEach(function (arr2,arr2index) {
+			self.characterbodyCartesia.addChild(arr2);
+		});
+
+		this.characterSwordObj = createWorldObj(foxSword,"foxsword");
+		this.characterSwordObj.forEach(function (arr3,arr3index) {
+			self.characterswordCartesia.addChild(arr3);
+		});
+
+		this.swordYAxisCartesia.randAxis = vec3(1,0,0);
+
+		this.swordIdle = new Mat4().translate(vec3(10,7.5,-2)).rotate(90,vec3(0,1,0)).rotate(60, vec3(1,0,0));
+
+		this.characterbodyCartesia.move(vec3(-6,0,1.5));
+		this.characterbodyCartesia.moveYaw(90);
+		this.characterbodyCartesia.scaleBy(3);
+
+		this.characterswordoffsetCartesia.move(vec3(0,-6,0));
+		this.characterswordoffsetCartesia.scaleBy(0.5);
+		this.characterswordCartesia.movePitch(90);
+
+		this.characterCartesia.scaleBy(0.01);
+		this.characterCartesia.moveRoll(90);
+		this.characterCartesia.moveYaw(180);
+		this.characterCartesia.move(vec3(0,0.16,0));
+
+		this.swordAttacking1 = false;
+		this.swordAttacking2 = false;
+		this.swordSpin = 0;
+		this.swordVertical = false;
+		this.swordUpMotion = false;
+		this.rightLeftSlash = 0;
+	}
+
+	var proto = {
+		swordAttack1: function () {
+			var randX = Math.random()-0.5;
+			var randY = Math.random()-0.5;
+			this.swordYAxisCartesia.randAxis = vec3(1,randX,randY);
+			this.swordYAxisCartesia.setTransform(new Mat4().rotateVectorToMatch(vec3(1,0,0), this.swordYAxisCartesia.randAxis));
+			this.swordAttacking1 = true;
+		},
+		swordAttack2: function () {
+			this.swordAttacking2 = true;
+		},
+		next: function () {
+			if (this.swordAttacking1) this.nextSwordAttack1();
+			else if (this.swordAttacking2) this.nextSwordAttack2();
+			else this.nextIdle();
+		},
+		//Sword Animation - Attack 1: Spin Attack
+		nextSwordAttack1: function () {
+			this.swordIdleCartesia.setTransform(new Mat4());
+			var speed = 77;
+			this.characterheadCartesia.movePitch(speed);
+			this.characterbodyCartesia.movePitch(-2*speed);
+			this.swordRotateCartesia.movePitch(speed);
+			this.swordSpin+=speed;
+			this.characterswordoffsetCartesia.swordPoint.checkForDamage();
+
+			if (this.swordSpin >= 360*2){
+				this.swordAttacking1 = false;
+				this.swordSpin = 0;
+				this.characterheadCartesia.resetRotation();
+				this.characterbodyCartesia.resetRotation();
+				this.characterbodyCartesia.moveYaw(90);
+				this.swordRotateCartesia.resetRotation();
+			}
+		},
+
+		//Attack 2: Slash Attack (Randomized for left/right)
+		nextSwordAttack2: function () {
+
+			this.swordIdleCartesia.setTransform(new Mat4());
+			this.swordYAxisCartesia.setTransform(new Mat4());
+			if (!this.swordVertical){
+				this.rightLeftSlash = Math.random() * 2;
+				this.swordVertical = true;
+				if (this.rightLeftSlash <= 1)
+					this.swordRotateCartesia.movePitch(-30);
+				else
+					this.swordRotateCartesia.movePitch(-150);
+				this.swordRotateCartesia.moveRoll(90);
+			}
+			if (!this.swordUpMotion){
+				this.swordRotateCartesia.moveRoll(-45);
+				if (this.rightLeftSlash <= 1)
+					this.swordRotateCartesia.movePitch(-25);
+				else
+					this.swordRotateCartesia.movePitch(25);
+				this.swordSpin+=45;
+				this.characterswordoffsetCartesia.swordPoint.checkForDamage();
+				if (this.swordSpin >= 180){
+					this.swordUpMotion = true;
+				}
+			} else{
+				this.swordRotateCartesia.moveRoll(45);
+				if (this.rightLeftSlash <= 1)
+					this.swordRotateCartesia.movePitch(25);
+				else
+					this.swordRotateCartesia.movePitch(-25);
+				this.swordSpin+=45;
+				if (this.swordSpin >= 360){
+					this.swordUpMotion = false;
+				}
+			}
+			if (this.swordSpin >= 360){
+				this.swordAttacking2 = false;
+				this.swordSpin = 0;
+				this.swordVertical = false;
+				if (this.rightLeftSlash <= 1)
+					this.swordRotateCartesia.movePitch(30);
+				else
+					this.swordRotateCartesia.movePitch(150);
+				this.swordRotateCartesia.moveRoll(-90);
+			}
+		},
+		//Sword is in IDLE position
+		nextIdle: function () {
+			this.swordIdleCartesia.setTransform(this.swordIdle);
+			this.swordYAxisCartesia.setTransform(new Mat4());
+		}
+	};
+
+	Fox.prototype = Object.create(Player.prototype);
+	for (var prop in proto) Fox.prototype[prop] = proto[prop];
+
+	socket.emit('chat message', playerID);
+
+		
+	var dude = new Fox(world, 130, 72, "fox1");
+	
+	//if we're randomizing colors
+	var x = vec4(Math.random(),Math.random(),Math.random(),1);
+
+	//dude.characterBodyObj[0].mesh.ambient = (x);
+	//dude.characterHeadObj[0].mesh.ambient = (x);
+
+
+	var otherdude = new Fox(world, 120, -50, "fox2");
+
+
+	function startGameCam(){
+		var parentDiv = document.getElementById("parentDiv");
+    	parentDiv.innerHTML = "HP: " + dude.hp;
+		var playerCam = new Camera();
+		dude.addChild(playerCam);
+		playerCam.move(vec3(0,1,1));
+		playerCam.movePitch(-30);
+		glwrapper.useCamera(playerCam);
+	}
+	world.moveYaw(-50);    
+
+	var backCart;
+    var background = new Image();
+    background.onload = function () {
+        backCart = new BackgroundCartesia(glwrapper.createTexture( background, gl.LINEAR, gl.LINEAR_MIPMAP_LINEAR , gl.REPEAT, gl.REPEAT ));
+    };
+    background.src = "background.png";
+
+
+	/************************************** Lights ******************************/
+
+	// red light on the left
+	var light1Cartesia = new LightCartesia(vec4( 0.5, 0.5, 0.5, 1.0 ));
+	rootCartesia.addChild(light1Cartesia);
+	light1Cartesia.move(vec3(0,0,4));
+
+	var revs = Array.apply(null, new Array(6)).map(function () {
+		var yaxisrot = new CustomCartesia();
+		world.addChild(yaxisrot);
+		var x = Math.random()-0.5;
+		var y = Math.random()-0.5;
+		var z = Math.random()-0.5;
+		yaxisrot.setTransform(new Mat4().rotateYAxisTo(vec3(x,y,z)));
+
+		var lightRev = new SimpleCartesia();
+		yaxisrot.addChild(lightRev);
+
+		var r = Math.random();
+		var g = Math.random();
+		var b = Math.random();
+		var light = new LightCartesia(vec4(r,g,b), 2.0);
+		light.move(vec3(0,0,1.05));
+		lightRev.addChild(light);
+
+		var speed = 4*Math.random()+2;
+		return function () {
+			lightRev.moveYaw(speed);
+		};
+	});
+
+	/****************************************************************************/
+
+	glwrapper.beforeRender = function () {
+
+		// revolve lights
+		for (var i = 0; i < revs.length; i++) {
+			revs[i]();
+		}
+
+		world.moveYaw(0.3);
+        if(!startscreen){
+            var parentDiv = document.getElementById("parentDiv");
+            parentDiv.innerHTML = "HP: " + dude.hp;
+            if(dude.hp<=0){
+                parentDiv.innerHTML = "You died, final number of kills is " + score + ". Page will be refreshed shortly!";
+                setTimeout(function(){}, 3000);
+                location.reload(true);
+            }
+			if (otherdude.hp <= 0){
+				score++;
+				otherdude.hp = 50;
+			}
+            var hptostring = (10 - dude.hp)*0.1 + "";
+            
+            document.getElementById("parentDiv").style.background = "rgba(255,0,0,"+hptostring+")";
+        }
+
+		//Update Person Movement
+
+		dude.next();
+		dude.updatePosition();
+
+		otherdude.next();
+		otherdude.updatePosition();
+
+		if (discoMode)
+    	glwrapper.render = nightMode;
+    else
+    	glwrapper.render = regularMode;
+
+		//Update Zombie Movement
+		/*for(var x = 0; x<zombiedudes.length;x++){
+			//if (zombiedudes[x].checkTouch(dude))
+				//dude.hp--;
+			if(Math.random()>0.5)
+				if(Math.random()>0.3)
+					zombiedudes[x].turn(10*Math.random());
+				else
+					zombiedudes[x].turn(-10*Math.random());
+			else
+				zombiedudes[x].moveInDirection(vec3(0,0,-0.01));
+
+			zombiedudes[x].updatePosition();
+			if (zombiedudes[x].hp <= 0){
+				score++;
+				zombiedudes[x].hp = 50;
+				var rand = Math.random() * 4;
+				if (rand < 1)
+					zombiedudes[x].setLatitudeLongitude(100,80);
+				else if (rand < 2)
+					zombiedudes[x].setLatitudeLongitude(120,-50);
+				else if (rand < 3)
+					zombiedudes[x].setLatitudeLongitude(13,78);
+				else
+					zombiedudes[x].setLatitudeLongitude(80,0);
+			}
+		}*/
+	};
+
+    
+
+    var nightMode = function () {
+        this.beforeRender();
+
+        this.gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);      // Clear the color as well as the depth buffer.
+
+        gl.depthMask(false);
+
+        this.useShaders(BackgroundShader);
+        if (backCart) this.shaderHandler.drawTriangleMesh(backCart.mesh);
+
+        gl.disableVertexAttribArray( glwrapper.vCoord );
+        gl.depthMask(true);
+
+		this.useShaders(GBufferShader);
+
+		gl.disable(gl.BLEND);
+
+		gl.enable(gl.DEPTH_TEST);
+		gl.depthMask(true);
+		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT); // Clear gbuffer
+
+		this.shaderHandler.renderScene(this.scene, this.camera);
+
+		this.useShaders(PhongQuadShader);
+		gl.disable(gl.DEPTH_TEST); // everything should be drawn on top
+		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT); // clear frame buffer
+
+		gl.blendFunc(gl.ONE, gl.ONE);
+		gl.enable(gl.BLEND);
+
+		this.shaderHandler.renderScene();
+    };
+
+    var regularMode = function () {
+    	this.lights = [];
+        this.beforeRender();
+        this.gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);      // Clear the color as well as the depth buffer.
+
+        if (!this.scene) throw "Call useScene() to set the scene before calling draw()!";
+        if (!this.camera) throw "Call useCamera() to set a camera before calling draw()!";
+
+		gl.disable(gl.BLEND);
+		gl.enable(gl.DEPTH_TEST);
+        gl.depthMask(false);
+
+        this.useShaders(BackgroundShader);
+        if (backCart) this.shaderHandler.drawTriangleMesh(backCart.mesh);
+
+        gl.depthMask(true);
+
+		this.useShaders(PhongShader);
+
+		var aspect = this.canvas.width/this.canvas.height;
+		var perspectiveMatrix = new Mat4().perspective(45,aspect,0.1,-1);
+
+		this.gl.uniformMatrix4fv(this.cameraUniform, false, perspectiveMatrix.flatten());
+		this.gl.uniformMatrix4fv(this.projectionUniform, false, this.camera.getAbsoluteTransform().inverse().flatten());
+
+		
+		this.shaderHandler.renderScene(this.scene, this.camera);
+    };
+   	glwrapper.render = regularMode;
+
+	// starts the continuous render loop
+	glwrapper.start();
+
+	var canvas = this.canvas;
+	
+	window.setInterval(function(){
+  	/// call your function here
+	  	if(!startscreen)
+	  		return; 
+
+	  	startscreenctr++;
+
+	  	if(startscreenctr%2 === 0)
+	  	{
+	  		mCamera = new Camera();
+			mCamera.move(vec3(0, 1.5, 3));
+			mCamera.movePitch(-25); //tilt down to see the whole solar system
+			rootCartesia.addChild(mCamera); 
+			glwrapper.useScene(rootCartesia); 
+			glwrapper.useCamera(mCamera);// the root node of the scene to render
+			return;
+	  	}
+
+	  	if(startscreenctr == 1)
+	  	{
+		  	var parentDiv = document.getElementById("parentDiv");
+			parentDiv.innerHTML = "Press Space to begin";
+		  	mCamera = new Camera();
+			mCamera.move(vec3(0,1,1));
+			mCamera.movePitch(0);
+			rootCartesia.addChild(mCamera); // add camera to scene
+
+			glwrapper.useScene(rootCartesia); // the root node of the scene to render
+			glwrapper.useCamera(mCamera);
+			return;
+		}
+
+		if(startscreenctr == 3)
+		{
+			mCamera = new Camera();
+			mCamera.move(vec3(0,-0.7,1.5));
+			mCamera.movePitch(50);
+			mCamera.moveRoll(10);
+			rootCartesia.addChild(mCamera); // add camera to scene
+
+			glwrapper.useScene(rootCartesia); // the root node of the scene to render
+			glwrapper.useCamera(mCamera);
+			return;
+		}
+
+		if(startscreenctr >= 5)
+		{
+			mCamera = new Camera();
+			mCamera.move(vec3(0,-0.7,1.5));
+
+			if(startscreenctr<=5)
+				mCamera.movePitch(50);
+
+			if(startscreenctr>5)
+				mCamera.movePitch(Math.random()*50);
+
+			rootCartesia.addChild(mCamera); // add camera to scene
+
+			glwrapper.useScene(rootCartesia); // the root node of the scene to render
+			glwrapper.useCamera(mCamera);
+			return;
+		}
+	
+  
+	}, 3000);
+
+	if (state)
+		socket.emit('chat message', playerID + " yaw: " + world.yaw);
+
+	socket.on('chat message', function(msg){
+       if(msg.length == 6){
+       	if(msg!=playerID){ //First player
+       		dude.setLatitudeLongitude(130,72);
+       		otherdude.setLatitudeLongitude(120,-50);
+       		socket.emit('chat message', "fox2");
+       		state = true;
+       		socket.emit('chat message', playerID + " yaw: " + world.yaw);
+       	}
+       } else if (msg == "fox2"){
+	       	if (state != true){
+	       		dude.setLatitudeLongitude(120,-50);
+	       		otherdude.setLatitudeLongitude(130,72);
+	       		socket.emit('chat message', " player2:" + playerID );
+	       	} 
+       	} else if (msg.split(" ")[0] == "player2"){
+       		otherdude.Mesh.color = vec4(msg.split(" ")[0], msg.split(" ")[0], msg.split(" ")[0], 1);
+       	} else if (msg.split(" ")[1] == "yaw:"){
+       		if (msg.split(" ")[0] != playerID){
+       			world.yaw = parseInt(msg.split(" ")[2]);
+       		}
+       	}else if (msg.length > 6){
+       		if (msg.split(" ")[0] != playerID){
+	       		var x = parseInt(msg.split(" ")[1]);
+	       		var y = parseInt(msg.split(" ")[2]);
+	       		var z = parseInt(msg.split(" ")[3]);
+	       		var a = parseInt(msg.split(" ")[4]);
+	       		switch(a) {
+					case 37: otherdude.yaw = z; return; //left key: Move otherdude left
+					case 39: otherdude.yaw = z; return; //right key: Move otherdude right
+					case 38: otherdude.latitude = x; otherdude.longitude = y; return; //up key: move otherdude up
+					case 40: otherdude.latitude = x; otherdude.longitude = y; return; //down key: move otherdude down
+					case 69: otherdude.jump(); return; //e
+					case 81: if (!otherdude.swordAttacking1 && !otherdude.swordAttacking2) otherdude.swordAttack2(); return;//q
+					case 87: if (!otherdude.swordAttacking1 && !otherdude.swordAttacking2) otherdude.swordAttack1(); return;//w
+				}
+			}
+       	}
+      });
+
+	var sounds = {
+	    swordSpin:  {filename: 'music/swordSpin.mp3'},
+	    swordSlash:  {filename: 'music/swordSlash.mp3'}
+	};
+
+	function initSounds() {
+	    for (var key in sounds){
+	        sounds[key] = new Audio(sounds[key].filename);
+
+	        sounds[key].play = function(volume, loop){
+	            var self = this;
+	            if (volume) self.volume = volume;
+	            HTMLAudioElement.prototype.play.call(self);
+
+	            if (loop){
+	               self.addEventListener('ended', function(){
+	                    this.currentTime = 0;
+	                    HTMLAudioElement.prototype.play.call(self);
+	                }, false);
+	            }
+	            else
+	                self.currentTime = 0;
+	        };
+	    }
+	};
+	initSounds();
+
+	document.body.onkeypress = function (e) {
+		switch (String.fromCharCode(e.charCode)) {
+			//Normal Slash Attack
+			case "q": if (!dude.swordAttacking1 && !dude.swordAttacking2) {dude.swordAttack2(); sounds.swordSlash.play();} return;
+			//Powerful Spin Attack
+			case "w": 
+				if (!dude.swordAttacking1 && !dude.swordAttacking2) {dude.swordAttack1(); sounds.swordSpin.play();} return;
+			//Jump
+			case "e": dude.jump(); return;
+			//Make fullscreen
+			case "f": 
+				canvas.width = window.innerWidth;
+				canvas.height = window.innerHeight;
+				gl.viewport( 0, 0, canvas.width, canvas.height );
+				mCamera.setAspect(canvas.width/canvas.height);
+				return;
+			case "g": discoMode = !discoMode; 
+				myAudio.pause();
+				if (discoMode)
+					myAudio = new Audio('Music/disco.mp3');
+				else
+					myAudio = new Audio('Music/WarTrailClipped.mp3');
+				myAudio.loop = true;
+				myAudio.play();
+				return;
+		}
+	};
+
+	// some key bindings to show how movement works
+	// moveForward will move in the direction the object is facing (based on rotation matrix only)
+	document.body.onkeydown = function (e) {
+		switch(e.keyCode) {
+			case 32: startscreen = false; startGameCam(); break;
+			case 37: dude.turn(10); break; //left key: Move dude left
+			case 39: dude.turn(-10); break; //right key: Move dude right
+			case 38: dude.moveInDirection(vec3(0,0,-0.05)); break; //up key: move dude up
+			case 40: dude.moveInDirection(vec3(0,0,0.05)); break; //down key: move dude down
+		}
+		socket.emit('chat message', playerID + " " + dude.latitude + " " + dude.longitude + " " + dude.yaw + " " + e.keyCode);
+		return;
+	};
+
+	var myAudio = new Audio('Music/WarTrailClipped.mp3');
+	myAudio.loop = true;
+	myAudio.play();
+};
+
+</script>
+</body>
+
+</html>
