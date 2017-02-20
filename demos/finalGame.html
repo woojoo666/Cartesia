@@ -31,19 +31,19 @@ canvas {
   border: 1px solid black;
 }
 </style>
-<script type="text/javascript" src="Cartesia/webgl-utils.js"></script>
-<script type="text/javascript" src="Cartesia/Transformation.js"></script>
-<script type="text/javascript" src="Cartesia/Mesh.js"></script>
-<script type="text/javascript" src="Cartesia/WebGLWrapper.js"></script>
-<script type="text/javascript" src="Cartesia/ShaderHandler.js"></script>
-<script type="text/javascript" src="Cartesia/Cartesia.js"></script>
-<script type="text/javascript" src="Cartesia/Camera.js"></script>
-<script type="text/javascript" src="Cartesia/Cube.js"></script>
-<script type="text/javascript" src="Cartesia/Sphere.js"></script>
+<script type="text/javascript" src="../src/webgl-utils.js"></script>
+<script type="text/javascript" src="../src/Transformation.js"></script>
+<script type="text/javascript" src="../src/Mesh.js"></script>
+<script type="text/javascript" src="../src/WebGLWrapper.js"></script>
+<script type="text/javascript" src="../src/ShaderHandler.js"></script>
+<script type="text/javascript" src="../src/Cartesia.js"></script>
+<script type="text/javascript" src="../src/Camera.js"></script>
+<script type="text/javascript" src="../src/Cube.js"></script>
+<script type="text/javascript" src="../src/Sphere.js"></script>
 <script type='text/javascript' src='webgl-obj-loader.js'></script>
 <script type='text/javascript' src='worldModels.js'></script>
 <script type='text/javascript' src='staticassets.js'></script>
-<script type='text/javascript' src='PhysicsCollision/World.js'></script>
+<script type='text/javascript' src='World.js'></script>
   </head>
   <body>
     
@@ -1071,8 +1071,8 @@ window.onload = function init()
       });
 
 	var sounds = {
-	    swordSpin:  {filename: 'music/swordSpin.mp3'},
-	    swordSlash:  {filename: 'music/swordSlash.mp3'}
+	    swordSpin:  {filename: 'swordSpin.mp3'},
+	    swordSlash:  {filename: 'swordSlash.mp3'}
 	};
 
 	function initSounds() {
@@ -1116,9 +1116,9 @@ window.onload = function init()
 			case "g": discoMode = !discoMode; 
 				myAudio.pause();
 				if (discoMode)
-					myAudio = new Audio('Music/disco.mp3');
+					myAudio = new Audio('disco.mp3');
 				else
-					myAudio = new Audio('Music/WarTrailClipped.mp3');
+					myAudio = new Audio('WarTrailClipped.mp3');
 				myAudio.loop = true;
 				myAudio.play();
 				return;
@@ -1139,7 +1139,7 @@ window.onload = function init()
 		return;
 	};
 
-	var myAudio = new Audio('Music/WarTrailClipped.mp3');
+	var myAudio = new Audio('WarTrailClipped.mp3');
 	myAudio.loop = true;
 	myAudio.play();
 };
