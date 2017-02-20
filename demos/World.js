@@ -184,6 +184,10 @@ var proto = {
 	collidesWith: function (other) {
 		return this.getAbsolutePosition().subtract(other.getAbsolutePosition()).magnitude() < this.radius + other.radius;
 	},
+	setBoundingParent: function (parent) {
+		parent.addBoundingSphere(this);
+		return this;
+	},
 };
 
 BoundingSphere.prototype = Object.create(SimpleCartesia.prototype);
@@ -209,6 +213,7 @@ function Player(planet, latitude, longitude, type) {
 var proto = {
 	turn: function (degrees) {
 		this.yaw += degrees;
+		return this;
 	},
 	checkValid: function () {
 		if (this.planet.collisionsWith(this)) {
@@ -236,7 +241,7 @@ var proto = {
 		var alongPlanet = vec3(offset[0],0,offset[2]);
 		if (alongPlanet.magnitude() === 0) {
 			this.checkValid();
-			return;
+			return this;
 		}
 
 		function degrees(rad) {
@@ -259,21 +264,24 @@ var proto = {
 		this.longitude = longitude;
 
 		this.checkValid();
+
+		return this;
 	},
 	getTransform: function () {
 		return PlanetObjectRevised.prototype.getTransform.call(this).rotate(this.yaw, vec3(0,1,0));
 	},
 	moveInDirection: function (offset) {
-		this.move(vec3.apply(this, new Mat4().rotate(this.yaw, vec3(0,1,0)).transformVector(vec4.apply(this, offset))));
+		return this.move(vec3.apply(this, new Mat4().rotate(this.yaw, vec3(0,1,0)).transformVector(vec4.apply(this, offset))));
 	},
     jump: function() {
     	if (this.offsetCartesia.position[1] <= 1.01) // only allow jumps if close to the surface of the planet 
             this.velocity = vec3(0,0.1,0); //0.05 is 3 m/s, average jumping velocity of human
+        return this;
     },
     updatePosition: function() {
-
         this.move(this.velocity);
         this.velocity[1] -= 0.05;//0.1635;  //9.81 m/s^2, acceleration due to gravity
+        return this;
     },
     onDamage: function () {
     	this.hp--;
