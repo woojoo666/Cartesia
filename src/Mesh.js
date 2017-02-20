@@ -4,8 +4,7 @@ function TriangleMesh(properties) {
 	
 	this.triangles = properties.triangles || this.calcTriangles(properties.vertices, properties.indices);
 	this.normals = properties.normals || this.calcNormals();
-	this.color = properties.color || vec4(1,1,1,1); //default color is white
-	this.material = this.calcMaterial(properties);
+	this.material = this.setMaterial(properties);
 	this.texture = properties.texture;
 }
 
@@ -41,4 +40,11 @@ TriangleMesh.prototype = {
 		this.diffuse = material.diffuse && material.diffuse.length ? material.diffuse : this.color.scale(this.diffuseFactor, true);
 		this.specular = material.specular && material.specular.length ? material.specular : this.color.scale(this.specularFactor, true);
 	},
+	setMaterial: function (material) {
+		this.color = material.color || vec4(1,1,1,1); //default color is white
+		this.calcMaterial(material);
+	},
+	setColor: function (color) {
+		this.setMaterial({color: color});
+	}
 };

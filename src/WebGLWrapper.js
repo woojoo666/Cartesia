@@ -94,7 +94,7 @@ WebGLWrapper.prototype = {
 		this.started = true;
 		var self = this;
 		(function animloop(){
-			if (self.started) setTimeout(function(){requestAnimFrame(animloop);}, 40);
+			if (self.started) requestAnimFrame(animloop);
 			self.render();
 		})();
 	},
