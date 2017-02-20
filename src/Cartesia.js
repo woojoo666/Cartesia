@@ -32,9 +32,11 @@ Cartesia.prototype = {
 	setParent: function (parent) {
 		parent.children.push(this);
 		this.parent = parent;
+		return this;
 	},
 	addChild: function (child) {
 		child.setParent(this);
+		return this;
 	},
 	// Cartesia simply propagates the draw() call to its children, while using the top-down approach to
 	// calculate absolute transformations at each node. Children can override draw() to do something useful.
@@ -60,9 +62,11 @@ function SimpleCartesia() {
 var proto = {
 	setPosition: function(position) {
 		this.position = position;
+		return this;
 	},
 	move: function(offset) {
 		this.setPosition(this.position.add(offset));
+		return this;
 	},
 	moveInDirection: function(offset) { //move towards the direction you're facing
 
@@ -74,28 +78,33 @@ var proto = {
 			.transformVector(vec4.apply(this, offset));
 
 		this.move(vec3.apply(this, transformedOffset));
+		return this;
 	},
 	resetPosition: function() {
 		this.moveTo(this.initialPosition);
+		return this;
 	},
 	resetRotation: function() {
 		this.roll = 0;
 		this.pitch = 0;
 		this.yaw = 0;
+		return this;
 	},
 	resetScale: function() {
 		this.scale = 1;
+		return this;
 	},
 	reset: function() {
-		this.resetPosition();
-		this.resetRotation();
-		this.resetScale();
+		this.resetPosition()
+			.resetRotation()
+			.resetScale();
+		return this;
 	},
-	movePitch: function (degrees) { this.pitch += degrees; },
-	moveYaw: function (degrees) { this.yaw += degrees; },
-	moveRoll: function (degrees) { this.roll += degrees; },
-	setScale: function (scale) { this.scale = scale; },
-	scaleBy: function (factor) { this.setScale(this.scale * factor); },
+	movePitch: function (degrees) { this.pitch += degrees; return this; },
+	moveYaw: function (degrees) { this.yaw += degrees; return this; },
+	moveRoll: function (degrees) { this.roll += degrees; return this; },
+	setScale: function (scale) { this.scale = scale; return this; },
+	scaleBy: function (factor) { this.setScale(this.scale * factor); return this; },
 	getTransform: function () {
 
 		//calculate rotation matrix from quaternion
@@ -133,6 +142,8 @@ var proto = {
 		this.children.forEach(function (child) {
 			child.draw(context, transform);
 		});
+
+		return this;
 	}
 };
 
@@ -150,9 +161,11 @@ function CustomCartesia () {
 var proto = {
 	setTransform: function (transform) {
 		this.transformation = transform;
+		return this;
 	},
 	applyTransform: function (transform) {
 		this.setTransform(this.transformation.append(transform));
+		return this;
 	},
 	getTransform: function () {
 		return this.transformation;
@@ -199,6 +212,8 @@ var proto = {
 		this.children.forEach(function (child) {
 			child.draw(context, transform);
 		});
+
+		return this;
 	}
 };
 
@@ -218,6 +233,8 @@ var proto = {
 		this.children.forEach(function (child) {
 			child.draw(context, transform);
 		});
+
+		return this;
 	}
 };
 
@@ -243,6 +260,8 @@ var proto = {
 		this.children.forEach(function (child) {
 			child.draw(context, transform);
 		});
+
+		return this;
 	}
 };
 
