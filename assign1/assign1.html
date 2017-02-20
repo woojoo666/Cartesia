@@ -13,30 +13,15 @@
 }
 </style>
 
-<script id="vertex-shader" type="x-shader/x-vertex">
-attribute vec4 vPosition;
-
-uniform mat4 uMVMatrix;
-uniform mat4 uPMatrix;
-
-void main() {
-    gl_Position = uPMatrix * uMVMatrix * vPosition;
-}
-</script>
-
-<script id="fragment-shader" type="x-shader/x-fragment">
-precision mediump float;
-uniform vec4 fColor;
-
-void main() {
-    gl_FragColor = fColor;
-}
-</script>
-<script type="text/javascript" src="webgl-utils.js"></script>
-<script type="text/javascript" src="initShaders.js"></script>
-<script type="text/javascript" src="MV.js"></script>
-<script type="text/javascript" src="Camera.js"></script>
-<script type="text/javascript" src="Cube.js"></script>
+<script type="text/javascript" src="../src/webgl-utils.js"></script>
+<script type="text/javascript" src="../src/Transformation.js"></script>
+<script type="text/javascript" src="../src/Mesh.js"></script>
+<script type="text/javascript" src="../src/WebGLWrapper.js"></script>
+<script type="text/javascript" src="../src/ShaderHandler.js"></script>
+<script type="text/javascript" src="../src/Cartesia.js"></script>
+<script type="text/javascript" src="../src/Camera.js"></script>
+<script type="text/javascript" src="../src/Cube.js"></script>
+<script type="text/javascript" src="../src/Sphere.js"></script>
 <script type="text/javascript" src="assign1.js"></script>
 </head>
 
