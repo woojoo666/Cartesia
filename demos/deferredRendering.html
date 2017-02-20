@@ -34,26 +34,17 @@ window.onload = function init()
 	// glwrapper.lightAttenuation = 0.05;
 	// glwrapper.lightColor = vec4( 0.7, 0, 0, 1 );
 
-	//start with camera moved back 5
-	var mCamera = new Camera();
-	mCamera.move(vec3(0, 0, 5));
-
 	var rootCartesia = new SimpleCartesia();
 
 	//start with camera moved back 10
-	mCamera = new Camera();
-	mCamera.move(vec3(0, 0, 6));
-	mCamera.setParent(rootCartesia);
+	mCamera = new Camera().setParent(rootCartesia).move(vec3(0, 0, 6));
 
-	var revolve = new SimpleCartesia();
-	revolve.setParent(rootCartesia);
+	var revolve = new SimpleCartesia().setParent(rootCartesia);
 
-	cube1 = new Cube(vec4( 1, 1, 1));
-	cube1.setPosition(vec3(0,0,1));
+	cube1 = new Cube(vec4( 1, 1, 1)).setParent(revolve).setPosition(vec3(0,0,1));
 	cube1.mesh.ambientFactor = 0.1;
 	cube1.mesh.specularFactor = 0;
 	cube1.mesh.shininess = 0;
-	cube1.setParent(revolve);
 
 	glwrapper.useScene(rootCartesia);
 	glwrapper.useCamera(mCamera);
@@ -64,23 +55,19 @@ window.onload = function init()
 	light1Cartesia.move(vec3(0,0,3));
 
 	var revs = Array.apply(null, new Array(5)).map(function () {
-		var yaxisrot = new CustomCartesia();
-		yaxisrot.setParent(cube1);
+		var yaxisrot = new CustomCartesia().setParent(cube1);
 		var x = Math.random()-0.5;
 		var y = Math.random()-0.5;
 		var z = Math.random()-0.5;
 		yaxisrot.setTransform(new Mat4().rotateYAxisTo(vec3(x,y,z)));
 
-		var lightRev = new SimpleCartesia();
-		lightRev.setParent(yaxisrot);
+		var lightRev = new SimpleCartesia().setParent(yaxisrot);
 
 		var r = Math.random();
 		var g = Math.random();
 		var b = Math.random();
-		var light = new LightCartesia(vec4(r,g,b), 2.0);
-		light.move(vec3(0,0,2));
+		var light = new LightCartesia(vec4(r,g,b), 2.0).setParent(lightRev).move(vec3(0,0,2));
 		light.attenuation = 0.1;
-		light.setParent(lightRev);
 
 		var speed = 4*Math.random()+2;
 		return function () {
@@ -94,9 +81,6 @@ window.onload = function init()
 			revs[i]();
 		}
 	};
-
-	glwrapper.useScene(rootCartesia);
-	glwrapper.useCamera(mCamera);
 
 	glwrapper.render = function () {
 

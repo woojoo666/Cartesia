@@ -45,16 +45,11 @@ window.onload = function init()
 	gl.enable(gl.BLEND);
 
 	//start with camera moved back 10
-	mCamera = new Camera();
-	mCamera.move(vec3(0, 0, 6));
-	mCamera.setParent(rootCartesia);
+	mCamera = new Camera().setParent(rootCartesia).move(vec3(0, 0, 6));
 
-	var revolve = new SimpleCartesia();
-	revolve.setParent(rootCartesia);
+	var revolve = new SimpleCartesia().setParent(rootCartesia);
 
-	cube1 = new Cube(vec4( 1, 1, 1));
-	cube1.setPosition(vec3(0,0,1));
-	cube1.setParent(revolve);
+	cube1 = new Cube(vec4( 1, 1, 1)).setParent(revolve).setPosition(vec3(0,0,1));
 
 	glwrapper.useScene(rootCartesia);
 	glwrapper.useCamera(mCamera);

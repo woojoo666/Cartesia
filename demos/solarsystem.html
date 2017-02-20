@@ -55,10 +55,9 @@ window.onload = function init()
 	glwrapper.lightSpecular = vec4( 1, 1, 1, 1.0 );
 
 	//start with camera moved back 20 and up 10
-	mCamera = new Camera();
-	mCamera.move(vec3(0, 10, 20));
-	mCamera.movePitch(-30); //tilt down to see the whole solar system
-	rootCartesia.addChild(mCamera); // add camera to scene
+	mCamera = new Camera().setParent(rootCartesia) // add camera to scene
+		.move(vec3(0, 10, 20))
+		.movePitch(-30); //tilt down to see the whole solar system
 
 	// Structure:
 	//
@@ -79,24 +78,18 @@ window.onload = function init()
 
 	// add sun at origin
 	// Sphere constructor: var mysphere = new Sphere(color, radius, complexity, shadeStyle);
-	var sun = new Sphere(vec4(1,1,0.7), 4, 20, "flat");
-	rootCartesia.addChild(sun);
+	var sun = new Sphere(vec4(1,1,0.7), 4, 20, "flat").setParent(rootCartesia);
 
 	// earth has a grandparent, which handles the revolution, and a parent, which the moon
 	// is attached to so scale/rotation transformations on the earth doesn't affect the moon's orbit
-	var earth = new Sphere(vec4( 1, 0, 0.5), 1, 10, "flat");
-	var earthNode = new SimpleCartesia();
-	var earthRev = new SimpleCartesia(); // earth's revolution Cartesia
-	earthNode.addChild(earth);
-	earthRev.addChild(earthNode);
-	rootCartesia.addChild(earthRev);
-
+	var earthRev = new SimpleCartesia().setParent(rootCartesia); // earth's revolution Cartesia
+	var earthNode = new SimpleCartesia().setParent(earthRev);
+	var earth = new Sphere(vec4( 1, 0, 0.5), 1, 10, "flat").setParent(earthNode)
+	
 	earthNode.move(vec3(7,0,0)); // distance from origin of revolution
 
-	var moon = new Sphere(vec4(0.3,0.3,0.3), 0.5, 5, "flat");
-	var moonRev = new SimpleCartesia();
-	moonRev.addChild(moon);
-	earthNode.addChild(moonRev);
+	var moonRev = new SimpleCartesia().setParent(earthNode);
+	var moon = new Sphere(vec4(0.3,0.3,0.3), 0.5, 5, "flat").setParent(moonRev);
 
 	glwrapper.useScene(rootCartesia); // the root node of the scene to render
 	glwrapper.useCamera(mCamera); // which perspective to render the scene from

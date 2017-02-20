@@ -20,20 +20,15 @@ window.onload = function init()
 	glwrapper.lightSpecular = vec4( 1, 1, 1, 1.0 );
 
 	//start with camera moved back 20 and up 10
-	mCamera = new Camera();
-	mCamera.move(vec3(0, 0, 25));
+	mCamera = new Camera().setParent(rootCartesia).move(vec3(0, 0, 25)); // add camera to scene
 	//mCamera.movePitch(-30); //tilt down to see the whole solar system
-	rootCartesia.addChild(mCamera); // add camera to scene
 
+	var world = new Planet(8).setParent(rootCartesia);
+	var sunSphere = new Sphere(vec4(1,1,0.7), 1, 20, "flat").setParent(world);
 
-	var world = new Planet(8);
-	var sunSphere = new Sphere(vec4(1,1,0.7), 1, 20, "flat");
-	world.addChild(sunSphere);
-	rootCartesia.addChild(world);
 	var dude = new Player(world, 90, 0);
 
-	var dudeSphere = new Sphere(vec4(1, 1, 1), 0.1, 5, "flat");
-	dude.addChild(dudeSphere);
+	var dudeSphere = new Sphere(vec4(1, 1, 1), 0.1, 5, "flat").setParent(dude);
 	var dudeBoundary = new BoundingSphere(0.1);
 	dude.addBoundingSphere(dudeBoundary);
 	dude.move(vec3(0, 1, 0));

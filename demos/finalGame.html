@@ -268,29 +268,18 @@ window.onload = function init()
 	glwrapper.lightSpecular = vec4( 1, 1, 1, 1.0 );
 
 	//start with camera moved back 20 and up 10
-	mCamera = new Camera();
-	mCamera.move(vec3(0, 1.5, 3));
-	mCamera.movePitch(-25); //tilt down to see the whole solar system
-	mCamera.setParent(rootCartesia); // add camera to scene
+	mCamera = new Camera().setParent(rootCartesia).move(vec3(0, 1.5, 3)).movePitch(-25); //add camera, tilted down
 
 	glwrapper.useScene(rootCartesia); // the root node of the scene to render
 	glwrapper.useCamera(mCamera); // which perspective to render the scene from
 
 	//-------------world --------------------------
-	var rotateCartesia = new SimpleCartesia();
+	var world = new Planet(1, 0.85).setParent(rootCartesia);
 
-	var worldCartesia = new SimpleCartesia();
+	var worldCartesia = new SimpleCartesia().setParent(world);
 	var testObj = createWorldObj(worldObjects,"world");
 	testObj.forEach(function(arrayobj,arrayindex)
 		{arrayobj.setParent(worldCartesia);});
-	
-	var world = new Planet(1, 0.85);
-
-	worldCartesia.setParent(world);
-	world.setParent(rootCartesia);
-
-	var rotateCartesia = new SimpleCartesia();
-	rotateCartesia.setParent(rootCartesia);
 
 	//Bounding Sphere for Mountain
 	var mountain = new PlanetObject(world, 73, -22);
@@ -308,13 +297,11 @@ window.onload = function init()
 
 	
 	//---------------lighthouse-------------
-	var lighthouseCartesia = new SimpleCartesia();
-	
-	lighthouseCartesia.movePitch(-90);
-	lighthouseCartesia.scaleBy(0.03);
-	//lighthouseCartesia.setParent(rootCartesia);
 	var lighthouse = new PlanetObject(world,-10,35);
-	lighthouseCartesia.setParent(lighthouse);
+	var lighthouseCartesia = new SimpleCartesia()
+		.setParent(lighthouse)
+		.movePitch(-90)
+		.scaleBy(0.03);
 
 	var lighthouseObj = createWorldObj(lighthouseObjects,"lighthouse",1);
 	lighthouseObj.forEach(function(arr,arrindex)
@@ -322,26 +309,25 @@ window.onload = function init()
 
 	//------ broken pillar ----------
 	function createBrokenPillar(planet, lat, lon) {
-		var brokenpillarCartesia = new SimpleCartesia();
-		
-		brokenpillarCartesia.movePitch(-90);
-		brokenpillarCartesia.scaleBy(0.04);
-		brokenpillarCartesia.move(vec3(0,-0.02,0));
 		var brokenpillar = new PlanetObject(planet,lat,lon);
-		brokenpillarCartesia.setParent(brokenpillar);
+
+		var brokenpillarCartesia = new SimpleCartesia()
+			.setParent(brokenpillar)
+			.movePitch(-90)
+			.scaleBy(0.04)
+			.move(vec3(0,-0.02,0));
+
 		var pillarBoundary = new BoundingSphere(0.05);
 		brokenpillar.addBoundingSphere(pillarBoundary);
 
-		var brokenpillarCartesia1 = new CustomCartesia();
-		var brokenpillarCartesia2 = new CustomCartesia();
+		var brokenpillarCartesia1 = new CustomCartesia().setParent(brokenpillarCartesia);
+		var brokenpillarCartesia2 = new CustomCartesia().setParent(brokenpillarCartesia);
 
 		brokenpillarCartesia1.setTransform(new Mat4().append(new Transformation(4,
 		[[0.6315264,0,0,0],[0,0.6315264,0,0],[0,0,0.6315264,0.8062159],[0,0,0,1]])));
-		brokenpillarCartesia1.setParent(brokenpillarCartesia);
 		
 		brokenpillarCartesia2.setTransform(new Mat4().append(new Transformation(4,
 		[[1,0,0,0],[0,1,0,0],[0,0,0.1558412,0],[0,0,0,1]])));
-		brokenpillarCartesia2.setParent(brokenpillarCartesia);
 
 		var brokenPillar1Obj = createWorldObj(brokenpillarObjects1,"brokenPillar1",1);
 		brokenPillar1Obj.forEach(function(arr1,arr1index)
@@ -358,32 +344,35 @@ window.onload = function init()
 	createBrokenPillar(world,-145,50);
 
 	//-------- Royce Hall --------------
-	var royceCartesia = new SimpleCartesia();
-	
-	royceCartesia.movePitch(-90);
-	royceCartesia.moveRoll(-90);
-	royceCartesia.scaleBy(0.03);
-	royceCartesia.move(vec3(0,-0.03,0));
 	var royce = new PlanetObject(world,-10,90);
-	royceCartesia.setParent(royce);
 
-	var royceCartesia1 = new SimpleCartesia();
-	
-	var royceCartesia2 = new CustomCartesia();
-	var royceCartesia3 = new CustomCartesia();
-	royceCartesia1.setParent(royceCartesia);
-	royceCartesia3.setParent(royceCartesia);
-	royceCartesia2.setParent(royceCartesia);
-	royceCartesia1.move(vec3(0,0,2.8));
-	
-	royceCartesia3.setTransform(new Mat4().translate(vec3(0,-8.2,0)));
+	var royceCartesia = new SimpleCartesia()
+		.setParent(royce)
+		.movePitch(-90)
+		.moveRoll(-90)
+		.scaleBy(0.03)
+		.move(vec3(0,-0.03,0));
 
-	royceCartesia3.applyTransform(new Mat4().append(new Transformation(4,[
-		[-1.25107e-8,-1.049129,0,0.08837295],[1.049129,-1.25107e-8,0,4.21192],[0,0,-0.07441448,9.141123],[0,0,0,1]
-	])));
-	royceCartesia2.applyTransform(new Mat4().append(new Transformation(4,[
-		[-1.25107e-8,-1.049129,0,0.08837295],[1.049129,-1.25107e-8,0,4.21192],[0,0,-0.07441448,9.141123],[0,0,0,1]
-	])));
+	var royceCartesia1 = new SimpleCartesia().setParent(royceCartesia).move(vec3(0,0,2.8));
+
+	var royceCartesia2 = new CustomCartesia()
+		.setParent(royceCartesia)
+		.applyTransform(new Mat4().append(new Transformation(4,[
+			[-1.25107e-8,-1.049129,0,0.08837295],
+			[1.049129,-1.25107e-8,0,4.21192],
+			[0,0,-0.07441448,9.141123],
+			[0,0,0,1]
+		])));
+
+	var royceCartesia3 = new CustomCartesia()
+		.setParent(royceCartesia)
+		.setTransform(new Mat4().translate(vec3(0,-8.2,0)))
+		.applyTransform(new Mat4().append(new Transformation(4,[
+			[-1.25107e-8,-1.049129,0,0.08837295],
+			[1.049129,-1.25107e-8,0,4.21192],
+			[0,0,-0.07441448,9.141123],
+			[0,0,0,1]
+		])));
 
 	var rocye1Obj = createWorldObj(royceObjects1,"royce1");
 	rocye1Obj.forEach(function(arr4,arr1index)
@@ -399,40 +388,46 @@ window.onload = function init()
 	
 	//----------- dead Tree -------------------------------
 	function createDeadTree(planet, lat, lon) {
-		var treeCartesia = new SimpleCartesia();
-		
-		treeCartesia.movePitch(-90);
-		treeCartesia.scaleBy(0.03);
-		treeCartesia.move(vec3(0,-0.03,0));
 		var deadtree = new PlanetObject(planet,lat,lon);
-		treeCartesia.setParent(deadtree);
 
-		var treeCartesia1 = new CustomCartesia();
-		treeCartesia1.setTransform(new Mat4().append(new Transformation(4,[
-			[1,0,0,0],[0,1,0,0],[0,0,5.012469,4.146373],[0,0,0,1]
-		])));
-		treeCartesia1.setParent(treeCartesia);
+		var treeCartesia = new SimpleCartesia()
+			.setParent(deadtree)
+			.movePitch(-90)
+			.scaleBy(0.03)
+			.move(vec3(0,-0.03,0));
+
+		var treeCartesia1 = new CustomCartesia()
+			.setParent(treeCartesia)
+			.setTransform(new Mat4().append(new Transformation(4,[
+				[1,0,0,0],[0,1,0,0],[0,0,5.012469,4.146373],[0,0,0,1]
+			])));
 		
-		var treeCartesia2 = new CustomCartesia();
-		treeCartesia2.setTransform(new Mat4().append(new Transformation(4,[
-			[-0.06246613,0.08540072,-0.5575405,-0.5035619],
-			[-0.1044635,0.09179561,0.421466,0.4421017],
-			[0.1240296,0.1203256,0.07417902,7.649969],
-			[0,0,0,1]
-		])));
-		treeCartesia2.setParent(treeCartesia);
+		var treeCartesia2 = new CustomCartesia()
+			.setParent(treeCartesia)
+			.setTransform(new Mat4().append(new Transformation(4,[
+				[-0.06246613,0.08540072,-0.5575405,-0.5035619],
+				[-0.1044635,0.09179561,0.421466,0.4421017],
+				[0.1240296,0.1203256,0.07417902,7.649969],
+				[0,0,0,1]
+			])));
 		
-		var treeCartesia3 = new CustomCartesia();
-		treeCartesia3.setTransform(new Mat4().append(new Transformation(4,[
-			[0.00137249,0.1754428,-0.1187501,-0.2010627],[-0.01945975,0.01237392,1.68369,1.816613],[0.1777011,0,0.1852953,6.3037],[0,0,0,1]
-		])));
-		treeCartesia3.setParent(treeCartesia);
+		var treeCartesia3 = new CustomCartesia()
+			.setParent(treeCartesia)
+			.setTransform(new Mat4().append(new Transformation(4,[
+				[0.00137249,0.1754428,-0.1187501,-0.2010627],
+				[-0.01945975,0.01237392,1.68369,1.816613],
+				[0.1777011,0,0.1852953,6.3037],
+				[0,0,0,1]
+			])));
 		
-		var treeCartesia4 = new CustomCartesia();
-		treeCartesia4.setTransform(new Mat4().append(new Transformation(4,[
-			[0.2723772,-0.3507037,-0.5396445,-0.5812497],[-0.09810556,0.126846,-1.494313,-1.818958],[0.3778918,0.2857113,0.001022772,3.642926],[0,0,0,1]
-		])));
-		treeCartesia4.setParent(treeCartesia);
+		var treeCartesia4 = new CustomCartesia()
+			.setParent(treeCartesia)
+			.setTransform(new Mat4().append(new Transformation(4,[
+				[0.2723772,-0.3507037,-0.5396445,-0.5812497],
+				[-0.09810556,0.126846,-1.494313,-1.818958],
+				[0.3778918,0.2857113,0.001022772,3.642926],
+				[0,0,0,1]
+			])));
 
 		var tree1Obj = createWorldObj(deadTreeObjects1,"tree1");
 		tree1Obj.forEach(function(arr1,arr1index)
@@ -470,29 +465,30 @@ window.onload = function init()
 
 	//----------- Tree Asset -------------------------------
 	function createTreeAsset(planet, lat, lon, z) {
-		var treeCartesia = new SimpleCartesia();
-		
-		treeCartesia.movePitch(-90);
-		treeCartesia.scaleBy(0.08);
-		treeCartesia.move(vec3(0,-(0.02*Math.random() + 0.07),0));
+		var assettree = new PlanetObject(planet,lat,lon);
+
+		var treeCartesia = new SimpleCartesia()
+			.setParent(assettree)
+			.movePitch(-90)
+			.scaleBy(0.08)
+			.move(vec3(0,-(0.02*Math.random() + 0.07),0));
 		if (z)
 			treeCartesia.move(vec3(0,z,0));
-		var assettree = new PlanetObject(planet,lat,lon);
-		treeCartesia.setParent(assettree);
+
 		var treeBoundary = new BoundingSphere(0.06);
 		assettree.addBoundingSphere(treeBoundary);
 
-		var treeCartesia1 = new CustomCartesia();
+		var treeCartesia1 = new CustomCartesia()
+			.setParent(treeCartesia);
 		/*treeCartesia1.setTransform(new Mat4().append(new Transformation(4,[
 			[1,0,0,0],[0,1,0,0],[0,0,5.012469,4.146373],[0,0,0,1]
 		])));*/
-		treeCartesia1.setParent(treeCartesia);
 		
-		var treeCartesia2 = new CustomCartesia();
-		treeCartesia2.setTransform(new Mat4().append(new Transformation(4,
-			[[0.8769287,0,0,0.1576381],[0,0.8769287,0,0.1593166],[0,0,0.8769287,2.520569],[0,0,0,1]]
-		)));
-		treeCartesia2.setParent(treeCartesia);
+		var treeCartesia2 = new CustomCartesia()
+			.setParent(treeCartesia)
+			.setTransform(new Mat4().append(new Transformation(4,[
+				[0.8769287,0,0,0.1576381],[0,0.8769287,0,0.1593166],[0,0,0.8769287,2.520569],[0,0,0,1]
+			])));
 
 		var tree1Obj = createWorldObj(assetTreeObjects1,"assettree1");
 		tree1Obj.forEach(function(arr1,arr1index)
@@ -537,23 +533,17 @@ window.onload = function init()
 		foxSword.push(new Coloredobject(characterVertices4, characterNormals4, material7index, vec4(0, 0, 0, 1), vec4(0.2548311, 0.01593546, 0.02052038, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material7"));
 		foxSword.push(new Coloredobject(characterVertices5, characterNormals5, material8index, vec4(0, 0, 0, 1), vec4(0.2937901, 0, 0.005734603, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material8"));
 
-		var zombieCartesia = new SimpleCartesia();
 		var zombiedude = new Player(planet, lat, lon);
 
-		zombieCartesia.setParent(zombiedude);
 		var zombiedudeBoundary = new BoundingSphere(0.06);
 		zombiedude.addBoundingSphere(zombiedudeBoundary);
 		zombiedude.move(vec3(0, 0.1, 0));
 
-		var zombieheadCartesia = new SimpleCartesia();
-		var zombiebodyCartesia = new SimpleCartesia();
-		var zombieswordoffsetCartesia = new SimpleCartesia();
-		var zombieswordCartesia = new SimpleCartesia();
-
-		zombieheadCartesia.setParent(zombieCartesia);
-		zombiebodyCartesia.setParent(zombieCartesia);
-		zombieswordoffsetCartesia.setParent(zombieCartesia);
-		zombieswordCartesia.setParent(zombieswordoffsetCartesia);
+		var zombieCartesia = new SimpleCartesia().setParent(zombiedude);
+		var zombieheadCartesia = new SimpleCartesia().setParent(zombieCartesia);
+		var zombiebodyCartesia = new SimpleCartesia().setParent(zombieCartesia);
+		var zombieswordoffsetCartesia = new SimpleCartesia().setParent(zombieCartesia);
+		var zombieswordCartesia = new SimpleCartesia().setParent(zombieswordoffsetCartesia);
 		
 		// called before every render
 		var zombieHeadObj = createWorldObj(foxHead,"foxhead");
@@ -568,18 +558,20 @@ window.onload = function init()
 		zombieSwordObj.forEach(function(arr3,arr3index)
 		{arr3.setParent(zombieswordCartesia);});
 
-		zombiebodyCartesia.move(vec3(-6,0,1.5));
-		zombieswordCartesia.move(vec3(0,-6,0));
-		zombiebodyCartesia.moveYaw(90);
-		zombiebodyCartesia.scaleBy(3);
-		zombieswordCartesia.scaleBy(0.5);
-		zombieswordCartesia.moveYaw(90);
+
+		zombiebodyCartesia.move(vec3(-6,0,1.5))
+			.moveYaw(90)
+			.scaleBy(3);
+
+		zombieswordCartesia.move(vec3(0,-6,0))
+			.scaleBy(0.5)
+			.moveYaw(90);
 		//zombieswordCartesia.movePitch(90);
 
-		zombieCartesia.scaleBy(0.01);
-		zombieCartesia.moveRoll(90);
-		zombieCartesia.moveYaw(180);
-		zombieCartesia.move(vec3(0,0.16,0));
+		zombieCartesia.scaleBy(0.01)
+			.moveRoll(90)
+			.moveYaw(180)
+			.move(vec3(0,0.16,0));
 
 		return zombiedude;
 	}
@@ -594,33 +586,24 @@ window.onload = function init()
 
 		Player.call(this, world, latitude, longitude, name);
 
-		this.characterCartesia = new SimpleCartesia();
-		var swordPoint = new DamagePoint(world, this);
-
-		this.characterCartesia.setParent(this);
 		this.dudeBoundary = new BoundingSphere(0.06);
 		this.addBoundingSphere(this.dudeBoundary);
 		this.move(vec3(0, 0.1, 0));
 
-		this.characterheadCartesia = new SimpleCartesia();
-		this.characterbodyCartesia = new SimpleCartesia();
+		this.characterCartesia = new SimpleCartesia().setParent(this);
 
-		this.swordIdleCartesia = new CustomCartesia();
-		this.swordRotateCartesia = new SimpleCartesia();
-		this.swordYAxisCartesia = new CustomCartesia();
-		this.characterswordoffsetCartesia = new SimpleCartesia();
-		this.characterswordCartesia = new SimpleCartesia();
-		swordPoint.setParent(this.characterswordoffsetCartesia);
+		this.characterheadCartesia = new SimpleCartesia().setParent(this.characterCartesia);
+		this.characterbodyCartesia = new SimpleCartesia().setParent(this.characterCartesia);
+
+		this.swordIdleCartesia = new CustomCartesia().setParent(this.characterCartesia);
+		this.swordYAxisCartesia = new CustomCartesia().setParent(this.swordIdleCartesia);
+		this.swordRotateCartesia = new SimpleCartesia().setParent(this.swordYAxisCartesia);
+		this.characterswordoffsetCartesia = new SimpleCartesia().setParent(this.swordRotateCartesia);
+		this.characterswordCartesia = new SimpleCartesia().setParent(this.characterswordoffsetCartesia);
+
+		var swordPoint = new DamagePoint(world, this).setParent(this.characterswordoffsetCartesia);
+
 		this.characterswordoffsetCartesia.swordPoint = swordPoint;
-
-		this.characterheadCartesia.setParent(this.characterCartesia);
-		this.characterbodyCartesia.setParent(this.characterCartesia);
-
-		this.swordIdleCartesia.setParent(this.characterCartesia);
-		this.swordYAxisCartesia.setParent(this.swordIdleCartesia);
-		this.swordRotateCartesia.setParent(this.swordYAxisCartesia);
-		this.characterswordoffsetCartesia.setParent(this.swordRotateCartesia);
-		this.characterswordCartesia.setParent(this.characterswordoffsetCartesia);
 
 		var self = this;
 		// called before every render
@@ -643,18 +626,21 @@ window.onload = function init()
 
 		this.swordIdle = new Mat4().translate(vec3(10,7.5,-2)).rotate(90,vec3(0,1,0)).rotate(60, vec3(1,0,0));
 
-		this.characterbodyCartesia.move(vec3(-6,0,1.5));
-		this.characterbodyCartesia.moveYaw(90);
-		this.characterbodyCartesia.scaleBy(3);
+		this.characterbodyCartesia
+			.move(vec3(-6,0,1.5))
+			.moveYaw(90)
+			.scaleBy(3);
 
-		this.characterswordoffsetCartesia.move(vec3(0,-6,0));
-		this.characterswordoffsetCartesia.scaleBy(0.5);
-		this.characterswordCartesia.movePitch(90);
+		this.characterswordoffsetCartesia
+			.move(vec3(0,-6,0))
+			.scaleBy(0.5)
+			.movePitch(90);
 
-		this.characterCartesia.scaleBy(0.01);
-		this.characterCartesia.moveRoll(90);
-		this.characterCartesia.moveYaw(180);
-		this.characterCartesia.move(vec3(0,0.16,0));
+		this.characterCartesia
+			.scaleBy(0.01)
+			.moveRoll(90)
+			.moveYaw(180)
+			.move(vec3(0,0.16,0));
 
 		this.swordAttacking1 = false;
 		this.swordAttacking2 = false;

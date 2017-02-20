@@ -22,7 +22,6 @@
 <script type="text/javascript" src="../src/Camera.js"></script>
 <script type="text/javascript" src="../src/Cube.js"></script>
 <script type="text/javascript" src="../src/Sphere.js"></script>
-<script type="text/javascript" src="cubes.js"></script>
 </head>
 
 <body>
@@ -83,22 +82,16 @@ window.onload = function init() {
         vec3( 10,  10, -10),
         vec3(-10,  10, -10),
     ].map(function (pos, indx) {
-        var offsetCartesia = new SimpleCartesia();
-        offsetCartesia.move(pos);
-        var rotatedAxis = new CustomCartesia();
-        rotatedAxis.setTransform(new Mat4().rotateYAxisTo(cubeRotationAxises[indx]));
-        var cube = new Cube(cubeColors[indx]);
+        var offsetCartesia = new SimpleCartesia().setParent(rootCartesia).move(pos);
+        var rotatedAxis = new CustomCartesia().setParent(offsetCartesia).setTransform(new Mat4().rotateYAxisTo(cubeRotationAxises[indx]));
+        var cube = new Cube(cubeColors[indx]).setParent(rotatedAxis);
         cube.scaleAngle = 0; // create a new property for size oscillations
 
-        offsetCartesia.setParent(rootCartesia);
-        rotatedAxis.setParent(offsetCartesia);
-        cube.setParent(rotatedAxis);
         return cube;
     });
 
     //start with camera moved back 6 units
-    mCamera = new Camera();
-    mCamera.move(vec3(0, 0, 50));
+    mCamera = new Camera().move(vec3(0, 0, 50));
 
     document.body.onkeypress = function (e) {
         switch (String.fromCharCode(e.charCode)) {
@@ -138,20 +131,15 @@ window.onload = function init() {
         vec3(1,0,1),
         vec3(1,1,0)
     ].map(function (axis, i) {
-        var rotatedAxis = new CustomCartesia();
-        rotatedAxis.setTransform(new Mat4().rotateYAxisTo(axis));
-        var orbit = new SimpleCartesia();
+        var rotatedAxis = new CustomCartesia().setParent(rootCartesia).setTransform(new Mat4().rotateYAxisTo(axis));
+        var orbit = new SimpleCartesia().setParent(rotatedAxis);
         orbit.yaw = 0; // set initial orbit angle
-        var moon = new Cube(cubeColors[i]);
+        var moon = new Cube(cubeColors[i]).setParent(orbit);
         moon.alphaAngle = 0; // add property for alpha scaling oscillation
         moon.offset = 3+i;
         moon.move(vec3(0,0,moon.offset));
         moon.offsetScalingAngle = 0; // add property for offset oscillation
         moon.scaleBy(0.5);
-
-        rotatedAxis.setParent(rootCartesia);
-        orbit.setParent(rotatedAxis);
-        moon.setParent(orbit);
 
         return moon;
     });
