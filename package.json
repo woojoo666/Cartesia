@@ -1,0 +1,10 @@
+{
+  "name": "cartesia",
+  "version": "0.0.1",
+  "description": "A simple, easy to use framework for WebGL.",
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-uglify": "^2.1.0"
+  }
+}
