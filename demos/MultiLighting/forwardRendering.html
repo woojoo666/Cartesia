@@ -12,15 +12,15 @@
 	overflow: hidden;
 }
 </style>
-<script type="text/javascript" src="../Cartesia/webgl-utils.js"></script>
-<script type="text/javascript" src="../Cartesia/Transformation.js"></script>
-<script type="text/javascript" src="../Cartesia/Mesh.js"></script>
-<script type="text/javascript" src="../Cartesia/WebGLWrapper.js"></script>
-<script type="text/javascript" src="../Cartesia/ShaderHandler.js"></script>
-<script type="text/javascript" src="../Cartesia/Cartesia.js"></script>
-<script type="text/javascript" src="../Cartesia/Camera.js"></script>
-<script type="text/javascript" src="../Cartesia/Cube.js"></script>
-<script type="text/javascript" src="../Cartesia/Sphere.js"></script>
+<script type="text/javascript" src="../../src/webgl-utils.js"></script>
+<script type="text/javascript" src="../../src/Transformation.js"></script>
+<script type="text/javascript" src="../../src/Mesh.js"></script>
+<script type="text/javascript" src="../../src/WebGLWrapper.js"></script>
+<script type="text/javascript" src="../../src/ShaderHandler.js"></script>
+<script type="text/javascript" src="../../src/Cartesia.js"></script>
+<script type="text/javascript" src="../../src/Camera.js"></script>
+<script type="text/javascript" src="../../src/Cube.js"></script>
+<script type="text/javascript" src="../../src/Sphere.js"></script>
 </head>
 
 <body>
@@ -47,14 +47,14 @@ window.onload = function init()
 	//start with camera moved back 10
 	mCamera = new Camera();
 	mCamera.move(vec3(0, 0, 6));
-	rootCartesia.addChild(mCamera);
+	mCamera.setParent(rootCartesia);
 
 	var revolve = new SimpleCartesia();
-	rootCartesia.addChild(revolve);
+	revolve.setParent(rootCartesia);
 
 	cube1 = new Cube(vec4( 1, 1, 1));
 	cube1.setPosition(vec3(0,0,1));
-	revolve.addChild(cube1);
+	cube1.setParent(revolve);
 
 	glwrapper.useScene(rootCartesia);
 	glwrapper.useCamera(mCamera);
