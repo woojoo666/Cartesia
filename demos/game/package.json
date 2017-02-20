@@ -1,0 +1,9 @@
+{
+  "name": "cartesia-demo-game",
+  "version": "0.0.1",
+  "description": "Simple socket.io communication for multiplayer",
+  "dependencies": {
+    "express": "4.10.2",
+    "socket.io": "1.2.0"
+  }
+}
