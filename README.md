@@ -7,7 +7,7 @@ Cartesia is founded on the concept of a [Scene Graph](https://en.wikipedia.org/w
 
 ### Including
 
-download `dist/cartesia.min.js` or link the latest version directly using gitraw:
+download `dist/cartesia.min.js` or link the latest version directly using [rawgit](https://rawgit.com/):
 
 ```html
 <script type="text/javascript" src="https://rawgit.com/woojoo666/Cartesia/master/dist/cartesia.min.js"></script>
