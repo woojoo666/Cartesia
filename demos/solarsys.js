@@ -26,12 +26,10 @@ window.onload = function init()
 	var world = new Planet(8).setParent(rootCartesia);
 	var sunSphere = new Sphere(vec4(1,1,0.7), 1, 20, "flat").setParent(world);
 
-	var dude = new Player(world, 90, 0);
+	var dude = new Player(world, 90, 0).move(vec3(0, 1, 0));
 
 	var dudeSphere = new Sphere(vec4(1, 1, 1), 0.1, 5, "flat").setParent(dude);
-	var dudeBoundary = new BoundingSphere(0.1);
-	dude.addBoundingSphere(dudeBoundary);
-	dude.move(vec3(0, 1, 0));
+	var dudeBoundary = new BoundingSphere(0.1).setBoundingParent(dude);
 
 	glwrapper.useScene(rootCartesia);
 	glwrapper.useCamera(mCamera);

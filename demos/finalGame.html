@@ -285,15 +285,13 @@ window.onload = function init()
 	var mountain = new PlanetObject(world, 73, -22);
 	//var mountainSphere = new Sphere(vec4(1, 0, 1), 0.28, 20, "flat");
 	//mountainSphere.setParent(mountain);
-	var mountainBoundary = new BoundingSphere(0.25);
-	mountain.addBoundingSphere(mountainBoundary);
+	var mountainBoundary = new BoundingSphere(0.25).setBoundingParent(mountain);
 
 	//Bounding Sphere2 for Mountain
 	var mountain2 = new PlanetObject(world, 108, -22);
 	//var mountainSphere2 = new Sphere(vec4(1, 1, 0), 0.28, 20, "flat");
 	//mountainSphere2.setParent(mountain2);
-	var mountainBoundary2 = new BoundingSphere(0.25);
-	mountain2.addBoundingSphere(mountainBoundary2);
+	var mountainBoundary2 = new BoundingSphere(0.25).setBoundingParent(mountain2);
 
 	
 	//---------------lighthouse-------------
@@ -317,8 +315,7 @@ window.onload = function init()
 			.scaleBy(0.04)
 			.move(vec3(0,-0.02,0));
 
-		var pillarBoundary = new BoundingSphere(0.05);
-		brokenpillar.addBoundingSphere(pillarBoundary);
+		var pillarBoundary = new BoundingSphere(0.05).setBoundingParent(brokenpillar);
 
 		var brokenpillarCartesia1 = new CustomCartesia().setParent(brokenpillarCartesia);
 		var brokenpillarCartesia2 = new CustomCartesia().setParent(brokenpillarCartesia);
@@ -475,8 +472,7 @@ window.onload = function init()
 		if (z)
 			treeCartesia.move(vec3(0,z,0));
 
-		var treeBoundary = new BoundingSphere(0.06);
-		assettree.addBoundingSphere(treeBoundary);
+		var treeBoundary = new BoundingSphere(0.06).setBoundingParent(assettree);
 
 		var treeCartesia1 = new CustomCartesia()
 			.setParent(treeCartesia);
@@ -533,11 +529,9 @@ window.onload = function init()
 		foxSword.push(new Coloredobject(characterVertices4, characterNormals4, material7index, vec4(0, 0, 0, 1), vec4(0.2548311, 0.01593546, 0.02052038, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material7"));
 		foxSword.push(new Coloredobject(characterVertices5, characterNormals5, material8index, vec4(0, 0, 0, 1), vec4(0.2937901, 0, 0.005734603, 1), vec4(0.5, 0.5, 0.5, 1), 50, "material8"));
 
-		var zombiedude = new Player(planet, lat, lon);
+		var zombiedude = new Player(planet, lat, lon).move(vec3(0, 0.1, 0));
 
-		var zombiedudeBoundary = new BoundingSphere(0.06);
-		zombiedude.addBoundingSphere(zombiedudeBoundary);
-		zombiedude.move(vec3(0, 0.1, 0));
+		var zombiedudeBoundary = new BoundingSphere(0.06).setBoundingParent(zombiedude);
 
 		var zombieCartesia = new SimpleCartesia().setParent(zombiedude);
 		var zombieheadCartesia = new SimpleCartesia().setParent(zombieCartesia);
@@ -586,9 +580,9 @@ window.onload = function init()
 
 		Player.call(this, world, latitude, longitude, name);
 
-		this.dudeBoundary = new BoundingSphere(0.06);
-		this.addBoundingSphere(this.dudeBoundary);
 		this.move(vec3(0, 0.1, 0));
+
+		this.dudeBoundary = new BoundingSphere(0.06).setBoundingParent(this);
 
 		this.characterCartesia = new SimpleCartesia().setParent(this);
 
