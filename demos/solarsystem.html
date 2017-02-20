@@ -12,15 +12,7 @@
 	overflow: hidden;
 }
 </style>
-<script type="text/javascript" src="../src/webgl-utils.js"></script>
-<script type="text/javascript" src="../src/Transformation.js"></script>
-<script type="text/javascript" src="../src/Mesh.js"></script>
-<script type="text/javascript" src="../src/WebGLWrapper.js"></script>
-<script type="text/javascript" src="../src/ShaderHandler.js"></script>
-<script type="text/javascript" src="../src/Cartesia.js"></script>
-<script type="text/javascript" src="../src/Camera.js"></script>
-<script type="text/javascript" src="../src/Cube.js"></script>
-<script type="text/javascript" src="../src/Sphere.js"></script>
+<script type="text/javascript" src="../dist/cartesia.min.js"></script>
 <script type="text/javascript" src="World.js"></script>
 </head>
 
@@ -30,21 +22,13 @@ Oops ... your browser doesn't support the HTML5 canvas element
 </canvas>
 <script>
 
-var glwrapper;
-var mCamera;
-var rootCartesia = new SimpleCartesia();
-var meshes = {};
-var loadedCube;
-
 window.onload = function init()
 {
 	// Initialize and Configure WebGL
 
-	glwrapper = new WebGLWrapper( "gl-canvas" );
+	var glwrapper = new WebGLWrapper( "gl-canvas" );
 
-	// expose these variables for easy access
-	var gl = glwrapper.gl;
-	var program = glwrapper.program;
+	var rootCartesia = new SimpleCartesia(); // create a root
 
 	// set lighting properties
 	glwrapper.lightPosition = vec4(0,0,5, 1);
@@ -54,7 +38,7 @@ window.onload = function init()
 	glwrapper.lightSpecular = vec4( 1, 1, 1, 1.0 );
 
 	//start with camera moved back 20 and up 10
-	mCamera = new Camera().setParent(rootCartesia) // add camera to scene
+	var mCamera = new Camera().setParent(rootCartesia) // add camera to scene
 		.move(vec3(0, 10, 20))
 		.movePitch(-30); //tilt down to see the whole solar system
 
@@ -100,8 +84,6 @@ window.onload = function init()
 		earthRev.moveYaw(2); // rotate earth's revolution by 2 degrees
 		moonRev.moveYaw(4); // rotate moon's revolution by 4 degrees
 		earth.moveYaw(-1); // earth rotates backward
-
-		if (loadedCube) loadedCube.moveYaw(2);
 	};
 
 	// starts the continuous render loop
