@@ -1,9 +1,17 @@
 Cartesia
---------
+========
 
-A simple, easy to use framework for WebGL.
+_A simple, easy to use framework for WebGL._
 
 Cartesia is founded on the concept of a [Scene Graph](https://en.wikipedia.org/wiki/Scene_graph), where all objects and transformations are relative to parent objects. Each of these objects/transformations can be thought of as a new coordinate plane, which we call a `Cartesia`. However, Cartesia also has many other features, including shader switching, buffer caching, and camera manipulation. See the `demos/` folder for some simple examples, and `demos/game/` for a fully fledged game made using Cartesia.
+
+### Including
+
+download `dist/cartesia.min.js` or link the latest version directly using gitraw:
+
+```html
+<script type="text/javascript" src="https://rawgit.com/woojoo666/Cartesia/master/dist/cartesia.min.js"></script>
+```
 
 ### Creating Objects
 
