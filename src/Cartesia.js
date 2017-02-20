@@ -29,9 +29,12 @@ Cartesia.prototype = {
 	getAbsolutePosition: function (parentTransform) {
         return vec3.apply(this, this.getAbsoluteTransform().col(3));
 	},
+	setParent: function (parent) {
+		parent.children.push(this);
+		this.parent = parent;
+	},
 	addChild: function (child) {
-		this.children.push(child);
-		child.parent = this;
+		child.setParent(this);
 	},
 	// Cartesia simply propagates the draw() call to its children, while using the top-down approach to
 	// calculate absolute transformations at each node. Children can override draw() to do something useful.

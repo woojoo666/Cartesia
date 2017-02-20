@@ -58,9 +58,9 @@ window.onload = function init() {
         var cube = new Cube(cubeColors[indx]);
         cube.scaleAngle = 0; // create a new property for size oscillations
 
-        rootCartesia.addChild(offsetCartesia);
-        offsetCartesia.addChild(rotatedAxis);
-        rotatedAxis.addChild(cube);
+        offsetCartesia.setParent(rootCartesia);
+        rotatedAxis.setParent(offsetCartesia);
+        cube.setParent(rotatedAxis);
         return cube;
     });
 
@@ -117,9 +117,9 @@ window.onload = function init() {
         moon.offsetScalingAngle = 0; // add property for offset oscillation
         moon.scaleBy(0.5);
 
-        rootCartesia.addChild(rotatedAxis);
-        rotatedAxis.addChild(orbit);
-        orbit.addChild(moon);
+        rotatedAxis.setParent(rootCartesia);
+        orbit.setParent(rotatedAxis);
+        moon.setParent(orbit);
 
         return moon;
     });

@@ -43,36 +43,36 @@ window.onload = function init()
 	//start with camera moved back 10
 	mCamera = new Camera();
 	mCamera.move(vec3(0, 0, 6));
-	rootCartesia.addChild(mCamera);
+	mCamera.setParent(rootCartesia);
 
 	var revolve = new SimpleCartesia();
-	rootCartesia.addChild(revolve);
+	revolve.setParent(rootCartesia);
 
 	cube1 = new Cube(vec4( 1, 1, 1));
 	cube1.setPosition(vec3(0,0,1));
 	cube1.mesh.ambientFactor = 0.1;
 	cube1.mesh.specularFactor = 0;
 	cube1.mesh.shininess = 0;
-	revolve.addChild(cube1);
+	cube1.setParent(revolve);
 
 	glwrapper.useScene(rootCartesia);
 	glwrapper.useCamera(mCamera);
 
 	// red light on the left
 	var light1Cartesia = new LightCartesia(vec4( 0.7, 0, 0, 1.0 ));
-	//rootCartesia.addChild(light1Cartesia);
+	//light1Cartesia.setParent(rootCartesia);
 	light1Cartesia.move(vec3(0,0,3));
 
 	var revs = Array.apply(null, new Array(5)).map(function () {
 		var yaxisrot = new CustomCartesia();
-		cube1.addChild(yaxisrot);
+		yaxisrot.setParent(cube1);
 		var x = Math.random()-0.5;
 		var y = Math.random()-0.5;
 		var z = Math.random()-0.5;
 		yaxisrot.setTransform(new Mat4().rotateYAxisTo(vec3(x,y,z)));
 
 		var lightRev = new SimpleCartesia();
-		yaxisrot.addChild(lightRev);
+		lightRev.setParent(yaxisrot);
 
 		var r = Math.random();
 		var g = Math.random();
@@ -80,7 +80,7 @@ window.onload = function init()
 		var light = new LightCartesia(vec4(r,g,b), 2.0);
 		light.move(vec3(0,0,2));
 		light.attenuation = 0.1;
-		lightRev.addChild(light);
+		light.setParent(lightRev);
 
 		var speed = 4*Math.random()+2;
 		return function () {
