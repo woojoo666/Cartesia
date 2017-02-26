@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<title>Texture</title>
+
+<style>
+* {
+	margin:0;
+	padding:0;
+	overflow: hidden;
+}
+</style>
+<script type="text/javascript" src="../dist/cartesia.min.js"></script>
+</head>
+
+<body>
+<canvas id="gl-canvas" width="960" height="540">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<script>
+
+var glwrapper;
+var mCamera;
+var rootCartesia = new Cartesia();
+var cube1;
+var cubeTexture1;
+var cube2;
+var cubeTexture2;
+
+var rotatecubes = false;
+var rotatetexture = false;
+var scrolltexture = false;
+
+window.onload = function init()
+{
+	// Initialize and Configure WebGL
+
+	glwrapper = new WebGLWrapper( "gl-canvas" );
+	var gl = glwrapper.gl;
+	var program = glwrapper.program;
+	var canvas = glwrapper.canvas;
+
+	//start with camera moved back 10
+	mCamera = new Camera();
+	mCamera.move(vec3(0, 0, 10));
+	rootCartesia.addChild(mCamera);
+
+	document.body.onkeypress = function (e) {
+		switch (String.fromCharCode(e.charCode)) {
+
+			case "i": mCamera.move(vec3(0, 0,-1)); return; //move forward
+			case "o": mCamera.move(vec3(0, 0, 1)); return; //move back
+			case "r": rotatecubes = !rotatecubes; return;
+			case "t": rotatetexture = !rotatetexture; return;
+			case "s": scrolltexture = !scrolltexture; return;
+			case "f": 
+				canvas.width = window.innerWidth;
+				canvas.height = window.innerHeight;
+				gl.viewport( 0, 0, canvas.width, canvas.height );
+				mCamera.setAspect(canvas.width/canvas.height);
+			return;
+		}
+	};
+
+	cube1 = new Cube();
+	cube1.setPosition(vec3(-2,0,0));
+	cube1.color = vec4( 1, 0, 0.5);
+	rootCartesia.addChild(cube1);
+	cube1.configureMaterial(cube1.color, cube1.color, cube1.color, 5);
+
+	cube2 = new Cube();
+	cube2.setPosition(vec3(2,0,0));
+	cube2.color = vec4( 0.5, 1, 0.5);
+	cube2.configureMaterial(cube2.color, cube2.color, cube2.color, 5);
+	rootCartesia.addChild(cube2);
+
+	var image1 = new Image();
+	image1.onload = function() { 
+		cube1.setTexture(glwrapper.createTexture( image1 , gl.NEAREST, gl.NEAREST, gl.CLAMP_TO_EDGE, gl.CLAMP_TO_EDGE ));
+	};
+	image1.src = "humanfish.png";
+
+	var image2 = new Image();
+	image2.onload = function() { 
+		cube2.setTexture(glwrapper.createTexture( image2 , gl.LINEAR, gl.LINEAR_MIPMAP_LINEAR , gl.REPEAT, gl.REPEAT ));
+	};
+	image2.src = "AngelChap7/SA2011_black.gif";
+
+	var textureangle = 0;
+	var texturescroll = 0;
+
+	glwrapper.useScene(rootCartesia);
+	glwrapper.useCamera(mCamera);
+
+	glwrapper.beforeRender = function () {
+
+		if (rotatecubes) {
+			cube1.moveYaw(2);
+
+			cube2.movePitch(-1);
+		}
+
+		// not entirely sure why you have to take the inverse, but it kinda makes sense...
+		// textureCoords defines the coordinates of the "canvas", but the image is still defined
+		// to be from (0,0) to (1,1). Thus, if you stretch the canvas by 3:
+		//           ______________
+		//         3|canvas        |
+		//         2|____          |
+		//         1|img |         |
+		//         0|____|_________|
+		//          0    1    2    3
+		//
+		// notice how it looks like the image is shrinking by 3. Translations work the same way
+
+		if (rotatetexture) {
+			textureangle += 2;
+			cube1.textureTransform = new Mat3().translate(vec2(0.5,0.5)).rotate(textureangle).translate(vec2(-0.5,-0.5)).inverse();
+		}
+		if (scrolltexture) {
+			texturescroll += 0.02;
+			cube2.textureTransform = new Mat3().translate(vec2(texturescroll,0)).scale(0.5).inverse();
+		}
+
+
+		glwrapper.useCamera(mCamera);
+
+		gl.activeTexture(gl.TEXTURE0); // use texture register 0 for binding
+		gl.uniform1i(gl.getUniformLocation(glwrapper.program, "texture"), 0); // tell shader to pull from register 0
+
+	};
+
+	glwrapper.start();
+};
+
+</script>
+</body>
+
+</html>
