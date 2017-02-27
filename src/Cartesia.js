@@ -176,44 +176,37 @@ CustomCartesia.prototype = Object.create(Cartesia.prototype);
 for (var key in proto) { CustomCartesia.prototype[key] = proto[key]; } //extend
 
 function TextureSquare (texture) {
-	var mesh = new TriangleMesh({
-		vertices: [
-			vec3(-1, -1,  0), // 3___2
-			vec3( 1, -1,  0), // |   |
-			vec3( 1,  1,  0), // |___|
-			vec3(-1,  1,  0), // 0   1
-		],
-		indices: [
-			[0,1,2], [0,2,3],
-		],
-	});
-	mesh.texCoords = [
-		0,0,
-		1,0,
-		1,1,
-
-		0,0,
-		1,1,
-		0,1,
-	];
-	mesh.texture = texture;
-	TriangleMeshSimpleCartesia.call(this, mesh); //call parent contructor
+	TriangleMeshSimpleCartesia.call(this, new TriangleMesh({
+		key: "texturesquare",
+		vertices: this.corners,
+		indices: this.triangles,
+		color: vec4(1,1,1), // always use white when drawing textures
+	})); //call parent contructor
+	this.mesh.texCoords = this.texCoords;
+	this.mesh.texture = texture;
 }
 
 var proto = {
-	draw : function (context, parentTransform) {
-		TextureShader.beforeDraw(context, this.mesh);
+	corners: [
+		vec3(-1, -1,  0), // 3___2
+		vec3( 1, -1,  0), // |   |
+		vec3( 1,  1,  0), // |___|
+		vec3(-1,  1,  0), // 0   1
+	],
+	triangles: [
+		[0,1,2], [0,2,3],
+	],
+	texCoords: [
+		vec2(0,0),
+		vec2(1,0),
+		vec2(1,1),
 
-		var transform = this.getAbsoluteTransform(parentTransform);
-
-		WebGLWrapperBasic.prototype.drawTriangleMesh.call(context, this.mesh, transform);
-
-		// if there are any children, draw them too
-		this.children.forEach(function (child) {
-			child.draw(context, transform);
-		});
-
-		return this;
+		vec2(0,0),
+		vec2(1,1),
+		vec2(0,1),
+	],
+	setTexture: function (texture) {
+		this.mesh.texture = texture;
 	}
 };
 

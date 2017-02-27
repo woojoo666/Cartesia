@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<title>Floor</title>
+
+<style>
+* {
+	margin:0;
+	padding:0;
+	overflow: hidden;
+}
+</style>
+<script type="text/javascript" src="../dist/cartesia.min.js"></script>
+</head>
+
+<body>
+<canvas id="gl-canvas" width="960" height="540">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<script>
+
+var glwrapper;
+var mCamera;
+var rootCartesia = new SimpleCartesia();
+var mfloor;
+
+window.onload = function init()
+{
+	// Initialize and Configure WebGL
+
+	glwrapper = new WebGLWrapper( "gl-canvas", TextureShader );
+
+	//start with camera moved back 20 and up 10
+	var mCamera = new Camera().setParent(rootCartesia) // add camera to scene
+		.move(vec3(0, 2, 4))
+		.movePitch(-30); //tilt down to see the whole solar system
+
+	var image1 = new Image();
+	image1.onload = function() { 
+		var texture = glwrapper.createTexture( image1 , gl.NEAREST, gl.NEAREST, gl.CLAMP_TO_EDGE, gl.CLAMP_TO_EDGE );
+		mfloor = new TextureSquare(texture).setParent(rootCartesia).movePitch(-90);
+	};
+	image1.src = "1080p.jpg";
+
+	glwrapper.useScene(rootCartesia);
+	glwrapper.useCamera(mCamera);
+
+	glwrapper.start();
+};
+
+</script>
+</body>
+
+</html>
