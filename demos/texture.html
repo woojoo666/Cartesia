@@ -66,9 +66,7 @@ var glwrapper;
 var mCamera;
 var rootCartesia = new SimpleCartesia();
 var cube1;
-var cubeTexture1;
 var cube2;
-var cubeTexture2;
 
 var rotatecubes = false;
 var rotatetexture = false;
@@ -80,13 +78,11 @@ window.onload = function init()
 
 	glwrapper = new WebGLWrapper( "gl-canvas", TextureShader );
 	var gl = glwrapper.gl;
-	var program = glwrapper.shaderHandler.program;
-	var canvas = glwrapper.canvas;
 
 	//start with camera moved back 10
-	mCamera = new Camera();
-	mCamera.move(vec3(0, 0, 10));
-	rootCartesia.addChild(mCamera);
+	mCamera = new Camera()
+		.setParent(rootCartesia)
+		.move(vec3(0, 0, 10));
 
 	document.body.onkeypress = function (e) {
 		switch (String.fromCharCode(e.charCode)) {
