@@ -11,10 +11,10 @@ module.exports = function(grunt) {
           'dist/cartesia.min.js' : [
             'src/webgl-utils.js',
             'src/Transformation.js',
+            'src/Cartesia.js',
             'src/Mesh.js',
             'src/WebGLWrapper.js',
             'src/ShaderHandler.js',
-            'src/Cartesia.js',
             'src/Camera.js',
             'src/Cube.js',
             'src/Sphere.js'
