@@ -588,13 +588,15 @@ var proto = {
 	initBuffersAndAttributes: function () {
 		var glwrapper = this.glwrapper;
 		var gl = glwrapper.gl;
-		var program = glwrapper.program;
+		var program = this.program;
 
 		this.vTexCoord = gl.getAttribLocation( program, "vTexCoord" );
 		gl.enableVertexAttribArray( this.vTexCoord );
 
 		this.textureBuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, glwrapper.textureBuffer);
+
+		gl.activeTexture(gl.TEXTURE0); // use texture register 0 for binding
+		gl.uniform1i(gl.getUniformLocation(program, "texture"), 0); // tell shader to pull from register 0
 
 		BasicShader.prototype.initBuffersAndAttributes.call(this);
 	},
@@ -606,10 +608,13 @@ var proto = {
 	// renderScene: inherited from BasicShader
 	drawTriangleMesh: function (mesh, transform) {
 		var gl = this.glwrapper.gl;
+		
 		// don't need to worry about buffer binding, buffer already bound in initBuffersAndAttributes
 		if (mesh && mesh.texture) gl.bindTexture( gl.TEXTURE_2D, mesh.texture ); 
-		gl.bufferData( gl.ARRAY_BUFFER, this.flatten(mesh.texCoords), gl.STATIC_DRAW );
-		gl.vertexAttribPointer( glwrapper.vTexCoord, 2, gl.FLOAT, false, 0, 0 );
+		
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
+		gl.bufferData( gl.ARRAY_BUFFER, this.flattenVertices(mesh.texCoords), gl.STATIC_DRAW );
+		gl.vertexAttribPointer( this.vTexCoord, 2, gl.FLOAT, false, 0, 0 );
 
 		BasicShader.prototype.drawTriangleMesh.call(this, mesh, transform);
 	}
@@ -670,7 +675,6 @@ var proto = {
 		gl.enableVertexAttribArray( this.vCoord );
 
 		this.textureBuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
 
 		gl.activeTexture(gl.TEXTURE0); // use texture register 0 for binding
 		gl.uniform1i(gl.getUniformLocation(program, "texture"), 0); // tell shader to pull from register 0

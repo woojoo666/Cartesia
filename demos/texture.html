@@ -13,6 +13,7 @@
 }
 </style>
 <script type="text/javascript" src="../dist/cartesia.min.js"></script>
+<script type="text/javascript" src="../src/ShaderHandler.js"></script>
 </head>
 
 <body>
@@ -21,9 +22,47 @@ Oops ... your browser doesn't support the HTML5 canvas element
 </canvas>
 <script>
 
+function TextureCube (texture, initialPosition) {
+	Cube.call(this, vec4(1,1,1), initialPosition); // use white material for drawing textures
+	this.textureTransform = new Mat3();
+	this.calcTexCoords();
+}
+
+var proto = {
+	key: "texturecube",
+	textureCorners: [
+		vec2(0, 0), // 3___2
+		vec2(1, 0), // |   |
+		vec2(1, 1), // |___|
+		vec2(0, 1), // 0   1
+	],
+	texCoordIndices: [
+		0,1,2, 0,2,3, // front
+		0,1,2, 0,2,3, // right
+		0,1,2, 0,2,3, // top
+		0,1,2, 0,2,3, // back
+		0,1,2, 0,2,3, // left,
+		0,1,2, 0,2,3, // bottom
+	],
+	// set mesh.textCoords from transformed texture corners
+	calcTexCoords: function () {
+		var transform = this.textureTransform;
+		this.mesh.texCoords = this.texCoordIndices
+			.map(i => this.textureCorners[i])
+			.map(vec => vec2(transform.transformVector(vec3(vec[0],vec[1],1))));
+	},
+	setTexture: function (texture) {
+		this.mesh.texture = texture;
+	},
+};
+
+TextureCube.prototype = Object.create(Cube.prototype);
+for (var key in proto) { TextureCube.prototype[key] = proto[key]; } //extend
+
+
 var glwrapper;
 var mCamera;
-var rootCartesia = new Cartesia();
+var rootCartesia = new SimpleCartesia();
 var cube1;
 var cubeTexture1;
 var cube2;
@@ -37,9 +76,9 @@ window.onload = function init()
 {
 	// Initialize and Configure WebGL
 
-	glwrapper = new WebGLWrapper( "gl-canvas" );
+	glwrapper = new WebGLWrapper( "gl-canvas", TextureShader );
 	var gl = glwrapper.gl;
-	var program = glwrapper.program;
+	var program = glwrapper.shaderHandler.program;
 	var canvas = glwrapper.canvas;
 
 	//start with camera moved back 10
@@ -64,17 +103,15 @@ window.onload = function init()
 		}
 	};
 
-	cube1 = new Cube();
-	cube1.setPosition(vec3(-2,0,0));
-	cube1.color = vec4( 1, 0, 0.5);
-	rootCartesia.addChild(cube1);
-	cube1.configureMaterial(cube1.color, cube1.color, cube1.color, 5);
+	cube1 = new TextureCube(vec4( 1, 0, 0.5))
+		.setParent(rootCartesia)
+		.setPosition(vec3(-2,0,0));
+	cube1.mesh.setMaterial({ambient: 1, specular: 1, diffuse: 1, shininess: 5});
 
-	cube2 = new Cube();
-	cube2.setPosition(vec3(2,0,0));
-	cube2.color = vec4( 0.5, 1, 0.5);
-	cube2.configureMaterial(cube2.color, cube2.color, cube2.color, 5);
-	rootCartesia.addChild(cube2);
+	cube2 = new TextureCube(vec4( 0.5, 1, 0.5))
+		.setParent(rootCartesia)
+		.setPosition(vec3(2,0,0));
+	cube2.mesh.setMaterial({ambient: 1, specular: 1, diffuse: 1, shininess: 5});
 
 	var image1 = new Image();
 	image1.onload = function() { 
@@ -86,7 +123,7 @@ window.onload = function init()
 	image2.onload = function() { 
 		cube2.setTexture(glwrapper.createTexture( image2 , gl.LINEAR, gl.LINEAR_MIPMAP_LINEAR , gl.REPEAT, gl.REPEAT ));
 	};
-	image2.src = "AngelChap7/SA2011_black.gif";
+	image2.src = "SA2011_black.gif";
 
 	var textureangle = 0;
 	var texturescroll = 0;
@@ -117,18 +154,13 @@ window.onload = function init()
 		if (rotatetexture) {
 			textureangle += 2;
 			cube1.textureTransform = new Mat3().translate(vec2(0.5,0.5)).rotate(textureangle).translate(vec2(-0.5,-0.5)).inverse();
+			cube1.calcTexCoords();
 		}
 		if (scrolltexture) {
 			texturescroll += 0.02;
 			cube2.textureTransform = new Mat3().translate(vec2(texturescroll,0)).scale(0.5).inverse();
+			cube2.calcTexCoords();
 		}
-
-
-		glwrapper.useCamera(mCamera);
-
-		gl.activeTexture(gl.TEXTURE0); // use texture register 0 for binding
-		gl.uniform1i(gl.getUniformLocation(glwrapper.program, "texture"), 0); // tell shader to pull from register 0
-
 	};
 
 	glwrapper.start();
