@@ -81,6 +81,8 @@ Shader.prototype = {
 
 function PhongShader (glwrapper) {
 	Shader.call(this, glwrapper);
+	this.vPosition = gl.getAttribLocation( this.program, "vPosition" ); // vPosition attribute index
+	this.vNormal = gl.getAttribLocation( this.program, "vNormal" ); // vNormal attribute index
 }
 
 var proto = {
@@ -170,10 +172,7 @@ var proto = {
 	initBuffersAndAttributes: function () {
 		var program = this.program;
 
-		this.vPosition = gl.getAttribLocation( program, "vPosition" );
 		gl.enableVertexAttribArray( this.vPosition );
-
-		this.vNormal = gl.getAttribLocation( program, "vNormal" );
 		gl.enableVertexAttribArray( this.vNormal );
 
 		this.dynamicVerticesBuffer = gl.createBuffer();
@@ -364,6 +363,7 @@ for (var prop in proto) GouraudShader.prototype[prop] = proto[prop]; //extend
 // and then Phong shader could just override that to account for normals
 function BasicShader (glwrapper) {
 	Shader.call(this, glwrapper);
+	this.vPosition = gl.getAttribLocation( this.program, "vPosition" );
 }
 
 var proto = {
@@ -400,7 +400,6 @@ var proto = {
 		var gl = glwrapper.gl;
 		var program = this.program;
 
-		this.vPosition = gl.getAttribLocation( program, "vPosition" );
 		gl.enableVertexAttribArray( this.vPosition );
 
 		glwrapper.dynamicVerticesBuffer = gl.createBuffer();
@@ -544,6 +543,8 @@ for (var prop in proto) BasicGBufferShader.prototype[prop] = proto[prop]; //exte
 
 function TextureShader (glwrapper) {
 	BasicShader.call(this, glwrapper);
+	this.vTexCoord = gl.getAttribLocation( this.program, "vTexCoord" );
+	this.textureBuffer = gl.createBuffer();
 }
 
 var proto = {
@@ -590,10 +591,7 @@ var proto = {
 		var gl = glwrapper.gl;
 		var program = this.program;
 
-		this.vTexCoord = gl.getAttribLocation( program, "vTexCoord" );
 		gl.enableVertexAttribArray( this.vTexCoord );
-
-		this.textureBuffer = gl.createBuffer();
 
 		gl.activeTexture(gl.TEXTURE0); // use texture register 0 for binding
 		gl.uniform1i(gl.getUniformLocation(program, "texture"), 0); // tell shader to pull from register 0
@@ -626,6 +624,9 @@ for (var prop in proto) TextureShader.prototype[prop] = proto[prop]; //extend
 
 function BackgroundShader (glwrapper) {
 	Shader.call(this, glwrapper);
+	this.vCoordBuffer = gl.createBuffer();
+	this.vCoord = gl.getAttribLocation( this.program, "vCoord" );
+	this.textureBuffer = gl.createBuffer();
 }
 
 var proto = {
@@ -664,17 +665,12 @@ var proto = {
 		var gl = this.glwrapper.gl;
 		var program = this.program;
 
-		this.vCoordBuffer = gl.createBuffer();
-
 		// because the data never changes, bind and load it now so we
 		// don't need to in drawTriangleMesh
-		this.vCoord = gl.getAttribLocation( program, "vCoord" );
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vCoordBuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, this.flattenTriangles( this.quadMesh.triangles ), gl.STATIC_DRAW);
 		gl.vertexAttribPointer( this.vCoord, 2, gl.FLOAT, false, 0, 0 );
 		gl.enableVertexAttribArray( this.vCoord );
-
-		this.textureBuffer = gl.createBuffer();
 
 		gl.activeTexture(gl.TEXTURE0); // use texture register 0 for binding
 		gl.uniform1i(gl.getUniformLocation(program, "texture"), 0); // tell shader to pull from register 0
