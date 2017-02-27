@@ -13,13 +13,15 @@
 }
 </style>
 <script type="text/javascript" src="../dist/cartesia.min.js"></script>
-<script type="text/javascript" src="../src/ShaderHandler.js"></script>
 </head>
 
 <body>
 <canvas id="gl-canvas" width="960" height="540">
 Oops ... your browser doesn't support the HTML5 canvas element
 </canvas>
+<p>Press "r" to toggle cube rotation</p>
+<p>Press "t" to toggle left cube texture rotation</p>
+<p>Press "s" to toggle right cube texture scroll+tiling</p>
 <script>
 
 function TextureCube (texture, initialPosition) {
@@ -112,18 +114,20 @@ window.onload = function init()
 		.setParent(rootCartesia)
 		.setPosition(vec3(2,0,0));
 	cube2.mesh.setMaterial({ambient: 1, specular: 1, diffuse: 1, shininess: 5});
+	cube2.textureTransform = new Mat3().scale(0.5).inverse(); //tile
+	cube2.calcTexCoords();
 
 	var image1 = new Image();
 	image1.onload = function() { 
 		cube1.setTexture(glwrapper.createTexture( image1 , gl.NEAREST, gl.NEAREST, gl.CLAMP_TO_EDGE, gl.CLAMP_TO_EDGE ));
 	};
-	image1.src = "humanfish.png";
+	image1.src = "1080p.jpg";
 
 	var image2 = new Image();
 	image2.onload = function() { 
 		cube2.setTexture(glwrapper.createTexture( image2 , gl.LINEAR, gl.LINEAR_MIPMAP_LINEAR , gl.REPEAT, gl.REPEAT ));
 	};
-	image2.src = "SA2011_black.gif";
+	image2.src = "conceit2.jpg";
 
 	var textureangle = 0;
 	var texturescroll = 0;
