@@ -79,6 +79,8 @@ WebGLWrapper.prototype = {
 	},
 	useCamera: function (camera) {
 		this.camera = camera;
+		var aspect = this.canvas.width/this.canvas.height;
+		camera.calcPerspective(aspect);
 	},
 	beforeRender: function () {
 		// Called before each render, override this in your instance!

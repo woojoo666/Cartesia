@@ -192,12 +192,7 @@ var proto = {
 
 		// Set Matrix Uniforms
 
-		var aspect = glwrapper.canvas.width/glwrapper.canvas.height;
-
-		//note that in perspective, giving a far of "-1" somehow makes it infinite :D
-		var perspectiveMatrix = new Mat4().perspective(45, aspect, 0.1, -1);
-
-		gl.uniformMatrix4fv(this.cameraUniform, false, perspectiveMatrix.flatten());
+		gl.uniformMatrix4fv(this.cameraUniform, false, camera.perspective.flatten());
 		gl.uniformMatrix4fv(this.projectUniform, false, camera.getAbsoluteTransform().inverse().flatten());
 
 		// draw
