@@ -26,7 +26,7 @@ Transformation.UniformScale = function (size, factor) {
 };
 
 Transformation.Scale = function(factors) {
-	var size = vector.length + 1;
+	var size = factors.length + 1;
 	return Transformation.Generate(size, function (r,c) {
 		return r == c ? ( c < size-1 && r < size-1 ? factors[r] : 1 ) : 0 ;
 	});
